@@ -1,0 +1,3596 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>The F100-L Instruction Set &#8212; F100L 0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="The F100-L Assembler" href="F100Asm.html" />
+    <link rel="prev" title="F100-L Microprocessor Architecture" href="F100Arch.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+
+  </head>
+  <body>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="the-f100-l-instruction-set">
+<h1>The F100-L Instruction Set<a class="headerlink" href="#the-f100-l-instruction-set" title="Permalink to this headline">¶</a></h1>
+<p>The following pages present complete descriptions for all instructions implemented in the F100-L.</p>
+<span class="target" id="module-InstructionReg"></span><div class="section" id="instruction-encoding">
+<h2>Instruction Encoding<a class="headerlink" href="#instruction-encoding" title="Permalink to this headline">¶</a></h2>
+<p>All instruction encodings are defined as overlapping but mutually exclusive bit fields.</p>
+<p>The bit fields are defined as follows</p>
+<blockquote>
+<div><table border="1" class="docutils">
+<colgroup>
+<col width="6%" />
+<col width="15%" />
+<col width="15%" />
+<col width="64%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>Field</td>
+<td>Number of bits</td>
+<td>Bit positions</td>
+<td>Comment</td>
+</tr>
+<tr class="row-even"><td>F</td>
+<td>4</td>
+<td>15..12</td>
+<td>Instruction class or function</td>
+</tr>
+<tr class="row-odd"><td>I</td>
+<td>1</td>
+<td>11</td>
+<td>Address Mode</td>
+</tr>
+<tr class="row-even"><td>T</td>
+<td>2</td>
+<td>11,10</td>
+<td>General field to qualify F=0 instructions</td>
+</tr>
+<tr class="row-odd"><td>R</td>
+<td>2</td>
+<td>9,8</td>
+<td>Register field or auto-index mode for indirect addressing</td>
+</tr>
+<tr class="row-even"><td>S</td>
+<td>2</td>
+<td>7,6</td>
+<td>General field to qualify F=0 instructions</td>
+</tr>
+<tr class="row-odd"><td>J</td>
+<td>2</td>
+<td>5,4</td>
+<td>General field to qualify F=0 instructions</td>
+</tr>
+<tr class="row-even"><td>N</td>
+<td>11</td>
+<td>10..0</td>
+<td>Memory address for direct addressing</td>
+</tr>
+<tr class="row-odd"><td>P</td>
+<td>8</td>
+<td>7..0</td>
+<td>Memory address used as pointer for pointer indirect addressing</td>
+</tr>
+<tr class="row-even"><td>B</td>
+<td>4</td>
+<td>3..0</td>
+<td>Shift number or bit significance</td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+<p>Where a don’t care (x) bit is presented in the tables, the assembler will consistently use a ‘0’. The
+emulator will ignore this field during decoding.</p>
+</div>
+<div class="section" id="instruction-timings">
+<h2>Instruction Timings<a class="headerlink" href="#instruction-timings" title="Permalink to this headline">¶</a></h2>
+<p>All instruction timings are defined using the following definitions</p>
+<blockquote>
+<div><ul class="simple">
+<li>Ra1 = Program memory read access time</li>
+<li>Ra2 = Data memory read access time</li>
+<li>Rc1 = Program memory read cycle time</li>
+<li>Rc2 = Data memory read cycle time</li>
+<li>M   = Read-modify-write cycle time</li>
+<li>Wc  = Data memory write cycle time</li>
+<li>L   = 1 Logic cycle time (2x period of the CPU clock input)</li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="abbreviations">
+<h2>Abbreviations<a class="headerlink" href="#abbreviations" title="Permalink to this headline">¶</a></h2>
+<p>Definitions</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">N</span>      <span class="mi">11</span> <span class="n">bit</span> <span class="n">memory</span> <span class="n">address</span> <span class="p">(</span><span class="n">associated</span> <span class="k">with</span> <span class="n">opcode</span> <span class="n">field</span> <span class="n">N</span> <span class="n">above</span><span class="p">)</span>
+<span class="n">P</span>       <span class="mi">8</span> <span class="n">bit</span> <span class="n">memory</span> <span class="n">address</span> <span class="p">(</span><span class="n">associated</span> <span class="k">with</span> <span class="n">opcode</span> <span class="n">field</span> <span class="n">P</span> <span class="n">above</span><span class="p">)</span>
+<span class="n">W</span>      <span class="mi">15</span> <span class="n">bit</span> <span class="n">memory</span> <span class="n">address</span>
+<span class="n">D</span>      <span class="mi">16</span> <span class="n">bit</span> <span class="n">immediate</span> <span class="n">data</span>
+<span class="p">(</span><span class="n">N</span><span class="p">)</span>    <span class="n">Contents</span> <span class="n">of</span> <span class="n">memory</span> <span class="n">location</span> <span class="n">N</span>
+<span class="p">(</span><span class="n">P</span><span class="p">)</span>    <span class="n">Contents</span> <span class="n">of</span> <span class="n">memory</span> <span class="n">location</span> <span class="n">P</span>
+<span class="p">(</span><span class="n">W</span><span class="p">)</span>    <span class="n">Contents</span> <span class="n">of</span> <span class="n">memory</span> <span class="n">location</span> <span class="n">W</span>
+<span class="n">PC</span>     <span class="n">Value</span> <span class="n">of</span> <span class="n">the</span> <span class="n">Program</span> <span class="n">Counter</span> <span class="p">(</span><span class="n">when</span> <span class="n">pointing</span> <span class="n">at</span> <span class="n">the</span> <span class="n">opcode</span> <span class="n">word</span><span class="p">)</span>
+<span class="p">(</span><span class="n">PC</span><span class="o">+</span><span class="n">d</span><span class="p">)</span> <span class="n">Contents</span> <span class="n">of</span> <span class="n">memory</span> <span class="n">location</span> <span class="n">offset</span> <span class="n">by</span> <span class="n">d</span> <span class="n">words</span> <span class="kn">from</span> <span class="nn">the</span> <span class="n">opcode</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="instruction-set-summary">
+<h2>Instruction Set Summary<a class="headerlink" href="#instruction-set-summary" title="Permalink to this headline">¶</a></h2>
+<table border="1" class="docutils">
+<colgroup>
+<col width="6%" />
+<col width="35%" />
+<col width="9%" />
+<col width="4%" />
+<col width="4%" />
+<col width="4%" />
+<col width="4%" />
+<col width="4%" />
+<col width="4%" />
+<col width="4%" />
+<col width="5%" />
+<col width="5%" />
+<col width="10%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td rowspan="2">Opcode</td>
+<td rowspan="2">Comment</td>
+<td colspan="7">Addressing Modes</td>
+<td colspan="3">Parameters</td>
+<td rowspan="2"><p class="first">Multi-Word</p>
+<p class="last">Operation</p>
+</td>
+</tr>
+<tr class="row-even"><td>Implicit</td>
+<td>N</td>
+<td>,D</td>
+<td>/P</td>
+<td>/P+</td>
+<td>/P-</td>
+<td>.W</td>
+<td>B A</td>
+<td>B CR</td>
+<td>B W</td>
+</tr>
+<tr class="row-odd"><td>ADD</td>
+<td>Add (with carry)</td>
+<td>&#160;</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>✓</td>
+</tr>
+<tr class="row-even"><td>ADS</td>
+<td>Add (with carry), store to memory</td>
+<td>&#160;</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>✓</td>
+</tr>
+<tr class="row-odd"><td>AND</td>
+<td>Logical AND</td>
+<td>&#160;</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td>CAL</td>
+<td>Call Subroutine</td>
+<td>&#160;</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>✓</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td>CLR</td>
+<td>Bit Manipulation</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td>CMP</td>
+<td>Compare</td>
+<td>&#160;</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>✓</td>
+</tr>
+<tr class="row-odd"><td>HALT</td>
+<td>Stop Processor Execution</td>
+<td>✓</td>
+<td>&#160;</td>
+<td>✓</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td>ICZ</td>
+<td>Increment and Jump if Non-Zero</td>
+<td>&#160;</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td>JBC</td>
+<td>Conditional Jump</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td>JBS</td>
+<td>Conditional Jump</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td>JCS</td>
+<td>Conditional Jump</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td>JMP</td>
+<td>Unconditional Jump</td>
+<td>&#160;</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td>JSC</td>
+<td>Conditional Jump</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td>LDA</td>
+<td>Load Accumulator from memory</td>
+<td>&#160;</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td>NEQ</td>
+<td>Logical XOR</td>
+<td>&#160;</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td>RTC</td>
+<td>Return from Subroutine</td>
+<td>✓</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td>RTN</td>
+<td>Return from Subroutine</td>
+<td>✓</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td>SBS</td>
+<td>Subtract (with carry), store to memory</td>
+<td>&#160;</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>✓</td>
+</tr>
+<tr class="row-odd"><td>SET</td>
+<td>Bit Manipulation</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td>SJM</td>
+<td>Switch Jump</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td>SLA</td>
+<td>Shift Left Arithmetic</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+</tr>
+<tr class="row-even"><td>SLE</td>
+<td>Rotate Left</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td>SLL</td>
+<td>Shift Left Logical</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+</tr>
+<tr class="row-even"><td>SRA</td>
+<td>Shift Right Arithmetic</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+</tr>
+<tr class="row-odd"><td>SRE</td>
+<td>Rotate Right</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td>SRL</td>
+<td>Shift Right Logical</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+</tr>
+<tr class="row-odd"><td>STO</td>
+<td>Store Accumulator to Memory</td>
+<td>&#160;</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td>SUB</td>
+<td>Subtract (with carry)</td>
+<td>&#160;</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>&#160;</td>
+<td>✓</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="instruction-definitions">
+<h2>Instruction Definitions<a class="headerlink" href="#instruction-definitions" title="Permalink to this headline">¶</a></h2>
+<span class="target" id="module-F100_Opcodes.OpcodeF9"></span><div class="section" id="add-add-with-carry">
+<h3>ADD - Add (With Carry)<a class="headerlink" href="#add-add-with-carry" title="Permalink to this headline">¶</a></h3>
+<p>Perform addition of the accumulator and an operand with the result being stored in
+the accumulator.</p>
+<p>When the multi-length ‘M’ flag is set, the carry bit from a previous operation is
+included in the addition.</p>
+<p><strong>Function</strong></p>
+<p>When ‘M’ is clear</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">ADD</span> <span class="n">N</span>      <span class="n">A</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">N</span><span class="p">)</span> <span class="o">+</span> <span class="n">A</span>
+<span class="n">ADD</span> <span class="p">,</span><span class="n">D</span>     <span class="n">A</span> <span class="o">&lt;-</span> <span class="n">D</span> <span class="o">+</span> <span class="n">A</span>
+<span class="n">ADD</span> <span class="o">/</span><span class="n">P</span>     <span class="n">A</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">+</span> <span class="n">A</span>
+<span class="n">ADD</span> <span class="o">/</span><span class="n">P</span><span class="o">+</span>    <span class="n">P</span> <span class="o">&lt;-</span> <span class="n">P</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">;</span> <span class="n">A</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">+</span> <span class="n">A</span>
+<span class="n">ADD</span> <span class="o">/</span><span class="n">P</span><span class="o">-</span>    <span class="n">A</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">+</span> <span class="n">A</span> <span class="p">;</span>  <span class="n">P</span> <span class="o">&lt;-</span> <span class="n">P</span> <span class="o">-</span> <span class="mi">1</span>
+<span class="n">ADD</span> <span class="o">.</span><span class="n">W</span>     <span class="n">A</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">W</span><span class="p">)</span> <span class="o">+</span> <span class="n">A</span>
+</pre></div>
+</div>
+<p>When ‘M’ is set</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">ADD</span> <span class="n">N</span>      <span class="n">A</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">N</span><span class="p">)</span> <span class="o">+</span> <span class="n">A</span> <span class="o">+</span> <span class="n">C</span>
+<span class="n">ADD</span> <span class="p">,</span><span class="n">D</span>     <span class="n">A</span> <span class="o">&lt;-</span> <span class="n">D</span> <span class="o">+</span> <span class="n">A</span> <span class="o">+</span> <span class="n">C</span>
+<span class="n">ADD</span> <span class="o">/</span><span class="n">P</span>     <span class="n">A</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">+</span> <span class="n">A</span> <span class="o">+</span> <span class="n">C</span>
+<span class="n">ADD</span> <span class="o">/</span><span class="n">P</span><span class="o">+</span>    <span class="n">P</span> <span class="o">&lt;-</span> <span class="n">P</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">;</span> <span class="n">A</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">-</span> <span class="n">A</span> <span class="o">+</span> <span class="n">C</span>
+<span class="n">ADD</span> <span class="o">/</span><span class="n">P</span><span class="o">-</span>    <span class="n">A</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">+</span> <span class="n">A</span> <span class="o">+</span> <span class="n">C</span> <span class="p">;</span>  <span class="n">P</span> <span class="o">&lt;-</span> <span class="n">P</span> <span class="o">-</span> <span class="mi">1</span>
+<span class="n">ADD</span> <span class="o">.</span><span class="n">W</span>     <span class="n">A</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">W</span><span class="p">)</span> <span class="o">+</span> <span class="n">A</span> <span class="o">+</span> <span class="n">C</span>
+</pre></div>
+</div>
+<p><strong>Instruction Encoding</strong></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="5%" />
+<col width="1%" />
+<col width="1%" />
+<col width="3%" />
+<col width="23%" />
+<col width="1%" />
+<col width="22%" />
+<col width="14%" />
+<col width="30%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td colspan="5">Opcode Word</td>
+<td colspan="2" rowspan="3">Operand Word</td>
+<td rowspan="3">Function</td>
+<td rowspan="3">Cycle count</td>
+</tr>
+<tr class="row-even"><td rowspan="2">F</td>
+<td rowspan="2">I</td>
+<td colspan="3">N</td>
+</tr>
+<tr class="row-odd"><td>&#160;</td>
+<td>R</td>
+<td>P</td>
+</tr>
+<tr class="row-even"><td>1001</td>
+<td>0</td>
+<td colspan="3">11’b&lt;non-zero addr&gt;</td>
+<td colspan="2">none</td>
+<td>ADD N</td>
+<td>TBC</td>
+</tr>
+<tr class="row-odd"><td>1001</td>
+<td>0</td>
+<td colspan="3">11’b000000000000</td>
+<td colspan="2">16`b&lt;data&gt;</td>
+<td>ADD ,D</td>
+<td>TBC</td>
+</tr>
+<tr class="row-even"><td>1001</td>
+<td>1</td>
+<td>x</td>
+<td>x0</td>
+<td>8’b&lt;non-zero ptr&gt;</td>
+<td colspan="2">none</td>
+<td>ADD /P</td>
+<td>TBC</td>
+</tr>
+<tr class="row-odd"><td>1001</td>
+<td>1</td>
+<td>x</td>
+<td>01</td>
+<td>8’b&lt;non-zero ptr&gt;</td>
+<td colspan="2">none</td>
+<td>ADD /P+</td>
+<td>TBC</td>
+</tr>
+<tr class="row-even"><td>1001</td>
+<td>1</td>
+<td>x</td>
+<td>11</td>
+<td>8’b&lt;non-zero ptr&gt;</td>
+<td colspan="2">none</td>
+<td>ADD /P-</td>
+<td>TBC</td>
+</tr>
+<tr class="row-odd"><td>1001</td>
+<td>1</td>
+<td>x</td>
+<td>xx</td>
+<td>8’b00000000</td>
+<td>x</td>
+<td>15’b&lt;addr&gt;</td>
+<td>ADD .W</td>
+<td>TBC</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Condition Register</strong></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>F</td>
+<td>M</td>
+<td>C</td>
+<td>S</td>
+<td>V</td>
+<td>Z</td>
+<td>I</td>
+</tr>
+<tr class="row-even"><td>–</td>
+<td>–</td>
+<td><ul class="first last simple">
+<li></li>
+</ul>
+</td>
+<td><ul class="first last simple">
+<li></li>
+</ul>
+</td>
+<td><ul class="first last simple">
+<li></li>
+</ul>
+</td>
+<td><ul class="first last simple">
+<li></li>
+</ul>
+</td>
+<td>–</td>
+</tr>
+</tbody>
+</table>
+<ul class="simple">
+<li>C is set if the operation results in a carry out, otherwise cleared</li>
+<li>Z is set if the result is all-zeroes, otherwise cleared</li>
+<li>S is set if the MSB of the result is a ‘1’, otherwise cleared</li>
+<li>V is set if the addition of two numbers with the same sign results in a value with the opposite sign</li>
+</ul>
+</div>
+<span class="target" id="module-F100_Opcodes.OpcodeF5"></span><div class="section" id="ads-add-with-carry-store-to-memory">
+<h3>ADS - Add (With Carry), Store to Memory<a class="headerlink" href="#ads-add-with-carry-store-to-memory" title="Permalink to this headline">¶</a></h3>
+<p>Perform addition of the accumulator and an operand with the result being stored in
+the operand’s original location.</p>
+<p>When the multi-length ‘M’ flag is set, the carry bit from a previous operation is
+included in the addition.</p>
+<p><strong>Function</strong></p>
+<p>When ‘M’ is clear</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">ADS</span> <span class="n">N</span>      <span class="p">(</span><span class="n">N</span><span class="p">)</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">N</span><span class="p">)</span> <span class="o">+</span> <span class="n">A</span>
+<span class="n">ADS</span> <span class="p">,</span><span class="n">D</span>     <span class="p">(</span><span class="n">PC</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">&lt;-</span> <span class="n">D</span> <span class="o">+</span> <span class="n">A</span>
+<span class="n">ADS</span> <span class="o">/</span><span class="n">P</span>     <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">+</span> <span class="n">A</span>
+<span class="n">ADS</span> <span class="o">/</span><span class="n">P</span><span class="o">+</span>    <span class="n">P</span> <span class="o">&lt;-</span> <span class="n">P</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">;</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">+</span> <span class="n">A</span>
+<span class="n">ADS</span> <span class="o">/</span><span class="n">P</span><span class="o">-</span>    <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">+</span> <span class="n">A</span> <span class="p">;</span>  <span class="n">P</span> <span class="o">&lt;-</span> <span class="n">P</span> <span class="o">-</span> <span class="mi">1</span>
+<span class="n">ADS</span> <span class="o">.</span><span class="n">W</span>     <span class="p">(</span><span class="n">W</span><span class="p">)</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">W</span><span class="p">)</span> <span class="o">+</span> <span class="n">A</span>
+</pre></div>
+</div>
+<p>When ‘M’ is set</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">ADS</span> <span class="n">N</span>      <span class="p">(</span><span class="n">N</span><span class="p">)</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">N</span><span class="p">)</span> <span class="o">+</span> <span class="n">A</span> <span class="o">+</span> <span class="n">C</span>
+<span class="n">ADS</span> <span class="p">,</span><span class="n">D</span>     <span class="p">(</span><span class="n">PC</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">&lt;-</span> <span class="n">D</span> <span class="o">+</span> <span class="n">A</span> <span class="o">+</span> <span class="n">C</span>
+<span class="n">ADS</span> <span class="o">/</span><span class="n">P</span>     <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">+</span> <span class="n">A</span> <span class="o">+</span> <span class="n">C</span>
+<span class="n">ADS</span> <span class="o">/</span><span class="n">P</span><span class="o">+</span>    <span class="n">P</span> <span class="o">&lt;-</span> <span class="n">P</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">;</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">-</span> <span class="n">A</span> <span class="o">+</span> <span class="n">C</span>
+<span class="n">ADS</span> <span class="o">/</span><span class="n">P</span><span class="o">-</span>    <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">+</span> <span class="n">A</span> <span class="o">+</span> <span class="n">C</span> <span class="p">;</span>  <span class="n">P</span> <span class="o">&lt;-</span> <span class="n">P</span> <span class="o">-</span> <span class="mi">1</span>
+<span class="n">ADS</span> <span class="o">.</span><span class="n">W</span>     <span class="p">(</span><span class="n">W</span><span class="p">)</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">W</span><span class="p">)</span> <span class="o">+</span> <span class="n">A</span> <span class="o">+</span> <span class="n">C</span>
+</pre></div>
+</div>
+<p>In the immediate mode operation, data ‘D’ is taken from the location (PC+1), ie the word immediately
+after the opcode, and the the result is returned to that location.</p>
+<p><strong>Instruction Encoding</strong></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="5%" />
+<col width="1%" />
+<col width="1%" />
+<col width="3%" />
+<col width="23%" />
+<col width="1%" />
+<col width="22%" />
+<col width="14%" />
+<col width="30%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td colspan="5">Opcode Word</td>
+<td colspan="2" rowspan="3">Operand Word</td>
+<td rowspan="3">Function</td>
+<td rowspan="3">Cycle count</td>
+</tr>
+<tr class="row-even"><td rowspan="2">F</td>
+<td rowspan="2">I</td>
+<td colspan="3">N</td>
+</tr>
+<tr class="row-odd"><td>&#160;</td>
+<td>R</td>
+<td>P</td>
+</tr>
+<tr class="row-even"><td>0101</td>
+<td>0</td>
+<td colspan="3">11’b&lt;non-zero addr&gt;</td>
+<td colspan="2">none</td>
+<td>ADS N</td>
+<td>TBC</td>
+</tr>
+<tr class="row-odd"><td>0101</td>
+<td>0</td>
+<td colspan="3">11’b000000000000</td>
+<td colspan="2">16’b&lt;data&gt;</td>
+<td>ADS ,D</td>
+<td>TBC</td>
+</tr>
+<tr class="row-even"><td>0101</td>
+<td>1</td>
+<td>x</td>
+<td>x0</td>
+<td>8’b&lt;non-zero ptr&gt;</td>
+<td colspan="2">none</td>
+<td>ADS /P</td>
+<td>TBC</td>
+</tr>
+<tr class="row-odd"><td>0101</td>
+<td>1</td>
+<td>x</td>
+<td>01</td>
+<td>8’b&lt;non-zero ptr&gt;</td>
+<td colspan="2">none</td>
+<td>ADS /P+</td>
+<td>TBC</td>
+</tr>
+<tr class="row-even"><td>0101</td>
+<td>1</td>
+<td>x</td>
+<td>11</td>
+<td>8’b&lt;non-zero ptr&gt;</td>
+<td colspan="2">none</td>
+<td>ADS /P-</td>
+<td>TBC</td>
+</tr>
+<tr class="row-odd"><td>0101</td>
+<td>1</td>
+<td>x</td>
+<td>xx</td>
+<td>8’b00000000</td>
+<td>x</td>
+<td>15’b&lt;addr&gt;</td>
+<td>ADS .W</td>
+<td>TBC</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Condition Register</strong></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>F</td>
+<td>M</td>
+<td>C</td>
+<td>S</td>
+<td>V</td>
+<td>Z</td>
+<td>I</td>
+</tr>
+<tr class="row-even"><td>–</td>
+<td>–</td>
+<td><ul class="first last simple">
+<li></li>
+</ul>
+</td>
+<td><ul class="first last simple">
+<li></li>
+</ul>
+</td>
+<td><ul class="first last simple">
+<li></li>
+</ul>
+</td>
+<td><ul class="first last simple">
+<li></li>
+</ul>
+</td>
+<td>–</td>
+</tr>
+</tbody>
+</table>
+<ul class="simple">
+<li>C is set if the operation results in a carry out, otherwise cleared</li>
+<li>Z is set if the result is all-zeroes, otherwise cleared</li>
+<li>S is set if the MSB of the result is a ‘1’, otherwise cleared</li>
+<li>V is set if the addition of two numbers with the same sign results in a value with the opposite sign</li>
+</ul>
+</div>
+<span class="target" id="module-F100_Opcodes.OpcodeF12"></span><div class="section" id="and-logical-and">
+<h3>AND - Logical AND<a class="headerlink" href="#and-logical-and" title="Permalink to this headline">¶</a></h3>
+<p>Perform a bitwise logical AND of accumulator with the specified operand.</p>
+<p><strong>Function</strong></p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">AND</span> <span class="n">N</span>      <span class="n">A</span> <span class="o">&lt;-</span> <span class="n">A</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">N</span><span class="p">)</span>
+<span class="n">AND</span> <span class="p">,</span><span class="n">D</span>     <span class="n">A</span> <span class="o">&lt;-</span> <span class="n">A</span> <span class="o">&amp;</span> <span class="n">D</span>
+<span class="n">AND</span> <span class="o">/</span><span class="n">P</span>     <span class="n">A</span> <span class="o">&lt;-</span> <span class="n">A</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span>
+<span class="n">AND</span> <span class="o">/</span><span class="n">P</span><span class="o">+</span>    <span class="n">P</span> <span class="o">&lt;-</span> <span class="n">P</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">;</span> <span class="n">A</span> <span class="o">&lt;-</span> <span class="n">A</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span>
+<span class="n">AND</span> <span class="o">/</span><span class="n">P</span><span class="o">-</span>    <span class="n">A</span> <span class="o">&lt;-</span> <span class="n">A</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="p">;</span> <span class="n">P</span> <span class="o">&lt;-</span> <span class="n">P</span> <span class="o">-</span> <span class="mi">1</span>
+<span class="n">AND</span> <span class="o">.</span><span class="n">W</span>     <span class="n">A</span> <span class="o">&lt;-</span> <span class="n">A</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">W</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Instruction Encoding</strong></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="5%" />
+<col width="1%" />
+<col width="1%" />
+<col width="3%" />
+<col width="3%" />
+<col width="19%" />
+<col width="1%" />
+<col width="22%" />
+<col width="14%" />
+<col width="30%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td colspan="6">Opcode Word</td>
+<td colspan="2" rowspan="3">Operand Word</td>
+<td rowspan="3">Function</td>
+<td rowspan="3">Cycle count</td>
+</tr>
+<tr class="row-even"><td rowspan="2">F</td>
+<td rowspan="2">I</td>
+<td colspan="4">N</td>
+</tr>
+<tr class="row-odd"><td>&#160;</td>
+<td colspan="3">R   | P</td>
+</tr>
+<tr class="row-even"><td>1100</td>
+<td>0</td>
+<td colspan="4">11’b&lt;non-zero addr&gt;</td>
+<td colspan="2">none</td>
+<td>AND N</td>
+<td>Ra1 + Ra2 + 18L</td>
+</tr>
+<tr class="row-odd"><td>1100</td>
+<td>0</td>
+<td colspan="4">11’b000000000000</td>
+<td colspan="2">16’b&lt;data&gt;</td>
+<td>AND ,D</td>
+<td>Ra1 + Rc1 + 18L</td>
+</tr>
+<tr class="row-even"><td>1100</td>
+<td>1</td>
+<td>x</td>
+<td>x0</td>
+<td colspan="2">8’b&lt;non-zero ptr&gt;</td>
+<td colspan="2">none</td>
+<td>AND /P</td>
+<td>Ra1 + Ra2 + 18L</td>
+</tr>
+<tr class="row-odd"><td>1100</td>
+<td>1</td>
+<td>x</td>
+<td>01</td>
+<td colspan="2">8’b&lt;non-zero ptr&gt;</td>
+<td colspan="2">none</td>
+<td>AND /P+</td>
+<td>Ra1 + M + 34L</td>
+</tr>
+<tr class="row-even"><td>1100</td>
+<td>1</td>
+<td>x</td>
+<td>11</td>
+<td colspan="2">8’b&lt;non-zero ptr&gt;</td>
+<td colspan="2">none</td>
+<td>AND /P-</td>
+<td>Ra1 + M + 34L</td>
+</tr>
+<tr class="row-odd"><td>1100</td>
+<td>1</td>
+<td>x</td>
+<td>xx</td>
+<td colspan="2">8’b00000000</td>
+<td>x</td>
+<td>15’b&lt;addr&gt;</td>
+<td>AND .W</td>
+<td>Ra1 + Ra2 + Rc1 + 18L</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Condition Register</strong></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>F</td>
+<td>M</td>
+<td>C</td>
+<td>S</td>
+<td>V</td>
+<td>Z</td>
+<td>I</td>
+</tr>
+<tr class="row-even"><td>–</td>
+<td>–</td>
+<td>1</td>
+<td><ul class="first last simple">
+<li></li>
+</ul>
+</td>
+<td>x</td>
+<td><ul class="first last simple">
+<li></li>
+</ul>
+</td>
+<td>–</td>
+</tr>
+</tbody>
+</table>
+<ul class="simple">
+<li>C is always set to 1</li>
+<li>Z is set if the result is all-zeroes, otherwise cleared</li>
+<li>S is set if the MSB of the result is a ‘1’, otherwise cleared</li>
+<li>V is undefined after this operation</li>
+</ul>
+</div>
+<span class="target" id="module-F100_Opcodes.OpcodeF2"></span><div class="section" id="cal-call-subroutine">
+<h3>CAL - Call Subroutine<a class="headerlink" href="#cal-call-subroutine" title="Permalink to this headline">¶</a></h3>
+<p>Jump to subroutine location provided by operand, storing return address in the link stack</p>
+<p><strong>Function</strong></p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">CAL</span> <span class="n">N</span>   <span class="p">(</span><span class="n">LSP</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">&lt;-</span> <span class="n">PC</span><span class="o">+</span><span class="mi">1</span><span class="p">;</span> <span class="p">(</span><span class="n">LSP</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span> <span class="o">&lt;-</span> <span class="n">CR</span> <span class="p">;</span> <span class="n">PC</span> <span class="o">&lt;-</span> <span class="n">N</span><span class="p">;</span> <span class="n">LSP</span> <span class="o">&lt;-</span> <span class="n">LSP</span><span class="o">+</span><span class="mi">2</span>
+<span class="n">CAL</span> <span class="p">,</span><span class="n">D</span>  <span class="p">(</span><span class="n">LSP</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">&lt;-</span> <span class="n">PC</span><span class="o">+</span><span class="mi">1</span><span class="p">;</span> <span class="p">(</span><span class="n">LSP</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span> <span class="o">&lt;-</span> <span class="n">CR</span> <span class="p">;</span> <span class="n">PC</span> <span class="o">&lt;-</span> <span class="n">PC</span><span class="o">+</span><span class="mi">1</span><span class="p">;</span> <span class="n">LSP</span> <span class="o">&lt;-</span> <span class="n">LSP</span><span class="o">+</span><span class="mi">2</span>
+<span class="n">CAL</span> <span class="o">/</span><span class="n">P</span>  <span class="p">(</span><span class="n">LSP</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">&lt;-</span> <span class="n">PC</span><span class="o">+</span><span class="mi">1</span><span class="p">;</span> <span class="p">(</span><span class="n">LSP</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span> <span class="o">&lt;-</span> <span class="n">CR</span> <span class="p">;</span> <span class="n">PC</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">P</span><span class="p">);</span> <span class="n">LSP</span> <span class="o">&lt;-</span> <span class="n">LSP</span><span class="o">+</span><span class="mi">2</span>
+<span class="n">CAL</span> <span class="o">.</span><span class="n">W</span>  <span class="p">(</span><span class="n">LSP</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">&lt;-</span> <span class="n">PC</span><span class="o">+</span><span class="mi">2</span><span class="p">;</span> <span class="p">(</span><span class="n">LSP</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span> <span class="o">&lt;-</span> <span class="n">CR</span> <span class="p">;</span> <span class="n">PC</span> <span class="o">&lt;-</span> <span class="n">W</span><span class="p">;</span> <span class="n">LSP</span> <span class="o">&lt;-</span> <span class="n">LSP</span><span class="o">+</span><span class="mi">2</span>
+</pre></div>
+</div>
+<p>Where LSP is link stack pointer held in memory location 0.</p>
+<p>NOTE: on entry the link stack pointer must always be an odd number.</p>
+<p>CAL ,D is a special case where only the link is stored in the link stack and the ‘D’ operand is
+treated as the next instruction. In this form the assembler discards the operand.</p>
+<p><strong>Instruction Encoding</strong></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="7%" />
+<col width="2%" />
+<col width="2%" />
+<col width="4%" />
+<col width="30%" />
+<col width="2%" />
+<col width="18%" />
+<col width="18%" />
+<col width="19%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td colspan="5">Opcode Word</td>
+<td colspan="2" rowspan="3">Operand Word</td>
+<td rowspan="3">Function</td>
+<td rowspan="3">Cycle count</td>
+</tr>
+<tr class="row-even"><td rowspan="2">F</td>
+<td rowspan="2">I</td>
+<td colspan="3">N</td>
+</tr>
+<tr class="row-odd"><td>&#160;</td>
+<td>R</td>
+<td>P</td>
+</tr>
+<tr class="row-even"><td>0010</td>
+<td>0</td>
+<td colspan="3">11’b&lt;non-zero addr&gt;</td>
+<td colspan="2">none</td>
+<td>CAL N</td>
+<td>TBC</td>
+</tr>
+<tr class="row-odd"><td>0010</td>
+<td>0</td>
+<td colspan="3">11’b000000000000</td>
+<td colspan="2">none</td>
+<td>CAL ,D</td>
+<td>TBC</td>
+</tr>
+<tr class="row-even"><td>0010</td>
+<td>1</td>
+<td>x</td>
+<td>xx</td>
+<td>8’b&lt;non-zero ptr&gt;</td>
+<td colspan="2">none</td>
+<td>CAL /P</td>
+<td>TBC</td>
+</tr>
+<tr class="row-odd"><td>0010</td>
+<td>1</td>
+<td>x</td>
+<td>xx</td>
+<td>8’b00000000</td>
+<td>x</td>
+<td>15’b&lt;addr&gt;</td>
+<td>CAL .W</td>
+<td>TBC</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Condition Register</strong></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>F</td>
+<td>M</td>
+<td>C</td>
+<td>S</td>
+<td>V</td>
+<td>Z</td>
+<td>I</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">-</span></code></td>
+<td><code class="docutils literal"><span class="pre">0</span></code></td>
+<td><code class="docutils literal"><span class="pre">-</span></code></td>
+<td><code class="docutils literal"><span class="pre">-</span></code></td>
+<td><code class="docutils literal"><span class="pre">-</span></code></td>
+<td><code class="docutils literal"><span class="pre">-</span></code></td>
+<td><code class="docutils literal"><span class="pre">-</span></code></td>
+</tr>
+</tbody>
+</table>
+<ul class="simple">
+<li>M is always cleared by this operation</li>
+</ul>
+</div>
+<span class="target" id="module-F100_Opcodes.OpcodeF0_Bit"></span><div class="section" id="clr-set-bit-manipulation">
+<h3>CLR, SET - Bit manipulation<a class="headerlink" href="#clr-set-bit-manipulation" title="Permalink to this headline">¶</a></h3>
+<p>Clear or set a single bit within the operand.</p>
+<p><strong>Function</strong></p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">CLR</span> <span class="n">B</span> <span class="n">A</span>   <span class="n">A</span><span class="p">[</span><span class="n">B</span><span class="p">]</span> <span class="o">&lt;-</span> <span class="mi">0</span>
+<span class="n">CLR</span> <span class="n">B</span> <span class="n">CR</span>  <span class="n">CR</span><span class="p">[</span><span class="n">B</span><span class="p">]</span> <span class="o">&lt;-</span> <span class="mi">0</span>
+<span class="n">CLR</span> <span class="n">B</span> <span class="n">W</span>   <span class="p">(</span><span class="n">W</span><span class="p">)[</span><span class="n">B</span><span class="p">]</span> <span class="o">&lt;-</span> <span class="mi">0</span>
+<span class="n">SET</span> <span class="n">B</span> <span class="n">A</span>   <span class="n">A</span><span class="p">[</span><span class="n">B</span><span class="p">]</span> <span class="o">&lt;-</span> <span class="mi">1</span>
+<span class="n">SET</span> <span class="n">B</span> <span class="n">CR</span>  <span class="n">CR</span><span class="p">[</span><span class="n">B</span><span class="p">]</span> <span class="o">&lt;-</span> <span class="mi">1</span>
+<span class="n">CLR</span> <span class="n">B</span> <span class="n">W</span>   <span class="p">(</span><span class="n">W</span><span class="p">)[</span><span class="n">B</span><span class="p">]</span> <span class="o">&lt;-</span> <span class="mi">1</span>
+</pre></div>
+</div>
+<p><strong>Instruction Encoding</strong></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="4%" />
+<col width="2%" />
+<col width="2%" />
+<col width="2%" />
+<col width="2%" />
+<col width="15%" />
+<col width="1%" />
+<col width="16%" />
+<col width="30%" />
+<col width="24%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td colspan="6">Opcode Word</td>
+<td colspan="2" rowspan="2">Operand</td>
+<td rowspan="2">Function</td>
+<td rowspan="2">Cycle count</td>
+</tr>
+<tr class="row-even"><td>F</td>
+<td>T</td>
+<td>R</td>
+<td>S</td>
+<td>J</td>
+<td>B</td>
+</tr>
+<tr class="row-odd"><td>0000</td>
+<td>00</td>
+<td>x0</td>
+<td>11</td>
+<td>11</td>
+<td>4’b&lt;bit field&gt;</td>
+<td colspan="2">none</td>
+<td>CLR B A</td>
+<td>TBC</td>
+</tr>
+<tr class="row-even"><td>0000</td>
+<td>00</td>
+<td>01</td>
+<td>11</td>
+<td>11</td>
+<td>4’b&lt;bit field&gt;</td>
+<td colspan="2">none</td>
+<td>CLR B CR</td>
+<td>TBC</td>
+</tr>
+<tr class="row-odd"><td>0000</td>
+<td>00</td>
+<td>11</td>
+<td>11</td>
+<td>11</td>
+<td>4’b&lt;bit field&gt;</td>
+<td>x</td>
+<td>15’b&lt;address W&gt;</td>
+<td>CLR B W</td>
+<td>TBC</td>
+</tr>
+<tr class="row-even"><td>0000</td>
+<td>00</td>
+<td>x0</td>
+<td>11</td>
+<td>10</td>
+<td>4’b&lt;bit field&gt;</td>
+<td colspan="2">none</td>
+<td>SET B A</td>
+<td>TBC</td>
+</tr>
+<tr class="row-odd"><td>0000</td>
+<td>00</td>
+<td>01</td>
+<td>11</td>
+<td>10</td>
+<td>4’b&lt;bit field&gt;</td>
+<td colspan="2">none</td>
+<td>SET B CR</td>
+<td>TBC</td>
+</tr>
+<tr class="row-even"><td>0000</td>
+<td>00</td>
+<td>11</td>
+<td>11</td>
+<td>10</td>
+<td>4’b&lt;bit field&gt;</td>
+<td>x</td>
+<td>15’b&lt;address W&gt;</td>
+<td>SET B W</td>
+<td>TBC</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Condition Register</strong></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>F</td>
+<td>M</td>
+<td>C</td>
+<td>S</td>
+<td>V</td>
+<td>Z</td>
+<td>I</td>
+</tr>
+<tr class="row-even"><td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+</tr>
+</tbody>
+</table>
+<ul class="simple">
+<li>Note that any operation on the CR will set the selected bit, but otherwise the Condition Register is not
+affected by these instructions.</li>
+</ul>
+</div>
+<span class="target" id="module-F100_Opcodes.OpcodeF11"></span><div class="section" id="cmp-compare">
+<h3>CMP - Compare<a class="headerlink" href="#cmp-compare" title="Permalink to this headline">¶</a></h3>
+<p>Perform either a single or multi-length comparison of the accumulator and an operand,
+depending on the state of the multi-length flag ‘M’ in the condition register.</p>
+<p>When M is set, a sequence of these instructions performs a multi-length subtraction
+without overwriting any of the operands. Multi-length compare is performed by including
+the carry from a previous compare in at the LSB end of the current instruction</p>
+<p>For both single and multi-length comparisons the results are discarded but the appropriate
+flags are set in the condition register.</p>
+<p>The ‘M’ flag is always set at the end of this operation.</p>
+<p><strong>Function</strong></p>
+<p>When ‘M’ is clear, single length comparison</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">CMP</span> <span class="n">N</span>      <span class="n">x</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">N</span><span class="p">)</span> <span class="o">-</span> <span class="n">A</span>
+<span class="n">CMP</span> <span class="p">,</span><span class="n">D</span>     <span class="n">x</span> <span class="o">&lt;-</span> <span class="n">D</span> <span class="o">-</span> <span class="n">A</span>
+<span class="n">CMP</span> <span class="o">/</span><span class="n">P</span>     <span class="n">x</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">-</span> <span class="n">A</span>
+<span class="n">CMP</span> <span class="o">/</span><span class="n">P</span><span class="o">+</span>    <span class="n">P</span> <span class="o">&lt;-</span> <span class="n">P</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">;</span> <span class="n">x</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">-</span> <span class="n">A</span>
+<span class="n">CMP</span> <span class="o">/</span><span class="n">P</span><span class="o">-</span>    <span class="n">x</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">-</span> <span class="n">A</span> <span class="p">;</span>  <span class="n">P</span> <span class="o">&lt;-</span> <span class="n">P</span> <span class="o">-</span> <span class="mi">1</span> <span class="p">;</span>
+<span class="n">CMP</span> <span class="o">.</span><span class="n">W</span>     <span class="n">x</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">W</span><span class="p">)</span> <span class="o">-</span> <span class="n">A</span>
+</pre></div>
+</div>
+<p>When ‘M’ is set</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">CMP</span> <span class="n">N</span>      <span class="n">x</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">N</span><span class="p">)</span> <span class="o">-</span> <span class="n">A</span> <span class="o">+</span> <span class="n">C</span> <span class="o">-</span> <span class="mi">1</span>
+<span class="n">CMP</span> <span class="p">,</span><span class="n">D</span>     <span class="n">x</span> <span class="o">&lt;-</span> <span class="n">D</span> <span class="o">-</span> <span class="n">A</span> <span class="o">+</span> <span class="n">C</span> <span class="o">-</span> <span class="mi">1</span>
+<span class="n">CMP</span> <span class="o">/</span><span class="n">P</span>     <span class="n">x</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">-</span> <span class="n">A</span> <span class="o">+</span> <span class="n">C</span> <span class="o">-</span> <span class="mi">1</span>
+<span class="n">CMP</span> <span class="o">/</span><span class="n">P</span><span class="o">+</span>    <span class="n">P</span> <span class="o">&lt;-</span> <span class="n">P</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">;</span> <span class="n">x</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">-</span> <span class="n">A</span> <span class="o">+</span> <span class="n">C</span> <span class="o">-</span> <span class="mi">1</span>
+<span class="n">CMP</span> <span class="o">/</span><span class="n">P</span><span class="o">-</span>    <span class="n">x</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">-</span> <span class="n">A</span> <span class="o">+</span> <span class="n">C</span> <span class="o">-</span> <span class="mi">1</span><span class="p">;</span>  <span class="n">P</span> <span class="o">&lt;-</span> <span class="n">P</span> <span class="o">-</span> <span class="mi">1</span> <span class="p">;</span>
+<span class="n">CMP</span> <span class="o">.</span><span class="n">W</span>     <span class="n">x</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">W</span><span class="p">)</span> <span class="o">-</span> <span class="n">A</span> <span class="o">+</span> <span class="n">C</span> <span class="o">-</span> <span class="mi">1</span>
+</pre></div>
+</div>
+<p><strong>Instruction Encoding</strong></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="5%" />
+<col width="1%" />
+<col width="1%" />
+<col width="3%" />
+<col width="23%" />
+<col width="1%" />
+<col width="22%" />
+<col width="14%" />
+<col width="30%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td colspan="5">Opcode Word</td>
+<td colspan="2" rowspan="3">Operand Word</td>
+<td rowspan="3">Function</td>
+<td rowspan="3">Cycle count</td>
+</tr>
+<tr class="row-even"><td rowspan="2">F</td>
+<td rowspan="2">I</td>
+<td colspan="3">&#160;</td>
+</tr>
+<tr class="row-odd"><td>&#160;</td>
+<td>R</td>
+<td>P</td>
+</tr>
+<tr class="row-even"><td>1011</td>
+<td>0</td>
+<td colspan="3">11’b&lt;non-zero addr&gt;</td>
+<td colspan="2">none</td>
+<td>CMP N</td>
+<td>TBC</td>
+</tr>
+<tr class="row-odd"><td>1011</td>
+<td>0</td>
+<td colspan="3">11’b000000000000</td>
+<td colspan="2">16’b&lt;data&gt;</td>
+<td>CMP ,D</td>
+<td>TBC</td>
+</tr>
+<tr class="row-even"><td>1011</td>
+<td>1</td>
+<td>x</td>
+<td>x0</td>
+<td>8’b&lt;non-zero ptr&gt;</td>
+<td colspan="2">none</td>
+<td>CMP /P</td>
+<td>TBC</td>
+</tr>
+<tr class="row-odd"><td>1011</td>
+<td>1</td>
+<td>x</td>
+<td>01</td>
+<td>8’b&lt;non-zero ptr&gt;</td>
+<td colspan="2">none</td>
+<td>CMP /P+</td>
+<td>TBC</td>
+</tr>
+<tr class="row-even"><td>1011</td>
+<td>1</td>
+<td>x</td>
+<td>11</td>
+<td>8’b&lt;non-zero ptr&gt;</td>
+<td colspan="2">none</td>
+<td>CMP /P-</td>
+<td>TBC</td>
+</tr>
+<tr class="row-odd"><td>1011</td>
+<td>1</td>
+<td>x</td>
+<td>xx</td>
+<td>8’b00000000</td>
+<td>x</td>
+<td>15’b&lt;addr&gt;</td>
+<td>CMP .W</td>
+<td>TBC</td>
+</tr>
+</tbody>
+</table>
+<p>Condition Register</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>F</td>
+<td>M</td>
+<td>C</td>
+<td>S</td>
+<td>V</td>
+<td>Z</td>
+<td>I</td>
+</tr>
+<tr class="row-even"><td>–</td>
+<td>1</td>
+<td><ul class="first last simple">
+<li></li>
+</ul>
+</td>
+<td><ul class="first last simple">
+<li></li>
+</ul>
+</td>
+<td><ul class="first last simple">
+<li></li>
+</ul>
+</td>
+<td><ul class="first last simple">
+<li></li>
+</ul>
+</td>
+<td>–</td>
+</tr>
+</tbody>
+</table>
+<ul class="simple">
+<li>C is cleared if the operation results in a borrow (carry), otherwise set</li>
+<li>M is always set to 1</li>
+<li>Z is set if the result is all-zeroes, otherwise cleared</li>
+<li>S is set if the MSB of the result is a ‘1’, otherwise cleared</li>
+<li>V is set if the subtraction of two numbers of different sign results in
+a number with the same sign as the subtrahend, otherwise cleared</li>
+</ul>
+</div>
+<span class="target" id="module-F100_Opcodes.OpcodeF0_Halt"></span><div class="section" id="halt-stop-processor-execution">
+<h3>HALT - Stop Processor Execution<a class="headerlink" href="#halt-stop-processor-execution" title="Permalink to this headline">¶</a></h3>
+<p>This instruction stops the CPU and prevents the F100-L from executing any further instructions.</p>
+<p>Once stopped the CPU can only be restarted by driving the RUN* pin high (the ‘STOP’ state) and then
+low again.</p>
+<p>The least significant 10 bits of the Opcode are ignored by the processor but can be used by the
+programmer to provide a halt number. The assembler allows the HALT instruction to appear either
+with or without an operand and in the latter case the 10 LSBs will be encoded into the opcode.</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">HALT</span>       <span class="n">Stop</span> <span class="n">processor</span> <span class="n">execution</span>
+<span class="n">HALT</span> <span class="p">,</span><span class="n">D</span>    <span class="n">Stop</span> <span class="n">processor</span> <span class="n">execution</span>
+</pre></div>
+</div>
+<p><strong>Instruction Encoding</strong></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="6%" />
+<col width="3%" />
+<col width="42%" />
+<col width="15%" />
+<col width="33%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td colspan="3">Opcode Word</td>
+<td rowspan="2">Function</td>
+<td rowspan="2">Cycle count</td>
+</tr>
+<tr class="row-even"><td>F</td>
+<td>T</td>
+<td>Halt Number</td>
+</tr>
+<tr class="row-odd"><td>0000</td>
+<td>01</td>
+<td>10’b&lt;Halt Number&gt;</td>
+<td>HALT</td>
+<td>TBC</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Condition Register</strong></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>F</td>
+<td>M</td>
+<td>C</td>
+<td>S</td>
+<td>V</td>
+<td>Z</td>
+<td>I</td>
+</tr>
+<tr class="row-even"><td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<div><ul class="simple">
+<li>The condition register is unaffected by this instruction</li>
+</ul>
+</div></blockquote>
+</div>
+<span class="target" id="module-F100_Opcodes.OpcodeF7"></span><div class="section" id="icz-increment-and-jump-if-non-zero">
+<h3>ICZ - Increment and Jump if Non-Zero<a class="headerlink" href="#icz-increment-and-jump-if-non-zero" title="Permalink to this headline">¶</a></h3>
+<p>Increment the contents of a counter or address and jump to a specified location if the result is non-zero</p>
+<p><strong>Function</strong></p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">ICZ</span> <span class="n">N</span>   <span class="n">W1</span>  <span class="p">(</span><span class="n">N</span><span class="p">)</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">N</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span> <span class="p">;</span> <span class="k">if</span> <span class="p">(</span><span class="n">Z</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span> <span class="n">PC</span> <span class="o">&lt;-</span> <span class="n">W1</span>
+<span class="n">ICZ</span> <span class="p">,</span><span class="n">D</span>  <span class="n">W1</span>  <span class="n">D</span> <span class="o">&lt;-</span> <span class="n">D</span><span class="o">+</span><span class="mi">1</span> <span class="p">;</span> <span class="k">if</span> <span class="p">(</span><span class="n">Z</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span> <span class="n">PC</span> <span class="o">&lt;-</span> <span class="n">W1</span>
+<span class="n">ICZ</span> <span class="o">/</span><span class="n">P</span>  <span class="n">W1</span>  <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span> <span class="p">;</span> <span class="k">if</span> <span class="p">(</span><span class="n">Z</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span> <span class="n">PC</span> <span class="o">&lt;-</span> <span class="n">W1</span>
+<span class="n">ICZ</span> <span class="o">/</span><span class="n">P</span><span class="o">+</span> <span class="n">W1</span>  <span class="n">P</span> <span class="o">&lt;-</span> <span class="n">P</span><span class="o">+</span><span class="mi">1</span> <span class="p">;</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span> <span class="p">;</span> <span class="k">if</span> <span class="p">(</span><span class="n">Z</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span> <span class="n">PC</span> <span class="o">&lt;-</span> <span class="n">W1</span>
+<span class="n">ICZ</span> <span class="o">/</span><span class="n">P</span><span class="o">-</span> <span class="n">W1</span>  <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span> <span class="p">;</span>  <span class="n">P</span> <span class="o">&lt;-</span> <span class="n">P</span><span class="o">-</span><span class="mi">1</span><span class="p">;</span> <span class="p">;</span> <span class="k">if</span> <span class="p">(</span><span class="n">Z</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span> <span class="n">PC</span> <span class="o">&lt;-</span> <span class="n">W1</span>
+<span class="n">ICZ</span> <span class="o">.</span><span class="n">W</span>  <span class="n">W1</span>  <span class="p">(</span><span class="n">W</span><span class="p">)</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">W</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span> <span class="p">;</span> <span class="k">if</span> <span class="p">(</span><span class="n">Z</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span> <span class="n">PC</span> <span class="o">&lt;-</span> <span class="n">W1</span>
+</pre></div>
+</div>
+<p><strong>Instruction Encoding</strong></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="5%" />
+<col width="1%" />
+<col width="1%" />
+<col width="2%" />
+<col width="20%" />
+<col width="1%" />
+<col width="18%" />
+<col width="1%" />
+<col width="19%" />
+<col width="13%" />
+<col width="17%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td colspan="5">Opcode Word</td>
+<td colspan="2" rowspan="3">Operand Word</td>
+<td colspan="2" rowspan="3">Second Operand</td>
+<td rowspan="3">Function</td>
+<td rowspan="3">Cycle count</td>
+</tr>
+<tr class="row-even"><td rowspan="2">F</td>
+<td rowspan="2">I</td>
+<td colspan="3">N</td>
+</tr>
+<tr class="row-odd"><td>&#160;</td>
+<td>R</td>
+<td>P</td>
+</tr>
+<tr class="row-even"><td>0111</td>
+<td>0</td>
+<td colspan="3">11’b&lt;non-zero addr&gt;</td>
+<td>x</td>
+<td>15’b&lt;jump addr&gt;</td>
+<td colspan="2">none</td>
+<td>ICZ N   W1</td>
+<td>TBC</td>
+</tr>
+<tr class="row-odd"><td>0111</td>
+<td>0</td>
+<td colspan="3">11’b000000000000</td>
+<td colspan="2">16’b&lt;data&gt;</td>
+<td>x</td>
+<td>15’b&lt;jump addr&gt;</td>
+<td>ICZ ,D  W1</td>
+<td>TBC</td>
+</tr>
+<tr class="row-even"><td>0111</td>
+<td>1</td>
+<td>x</td>
+<td>x0</td>
+<td>8’b&lt;non-zero ptr&gt;</td>
+<td>x</td>
+<td>15’b&lt;jump addr&gt;</td>
+<td colspan="2">none</td>
+<td>ICZ /P  W1</td>
+<td>TBC</td>
+</tr>
+<tr class="row-odd"><td>0111</td>
+<td>1</td>
+<td>x</td>
+<td>01</td>
+<td>8’b&lt;non-zero ptr&gt;</td>
+<td>x</td>
+<td>15’b&lt;jump addr&gt;</td>
+<td colspan="2">none</td>
+<td>ICZ /P+ W1</td>
+<td>TBC</td>
+</tr>
+<tr class="row-even"><td>0111</td>
+<td>1</td>
+<td>x</td>
+<td>11</td>
+<td>8’b&lt;non-zero ptr&gt;</td>
+<td>x</td>
+<td>15’b&lt;jump addr&gt;</td>
+<td colspan="2">none</td>
+<td>ICZ /P- W1</td>
+<td>TBC</td>
+</tr>
+<tr class="row-odd"><td>0111</td>
+<td>1</td>
+<td>x</td>
+<td>xx</td>
+<td>8’b00000000</td>
+<td>x</td>
+<td>15’b&lt;addr&gt;</td>
+<td>x</td>
+<td>15’b&lt;jump addr&gt;x</td>
+<td>ICZ .W  W1</td>
+<td>TBC</td>
+</tr>
+</tbody>
+</table>
+<p><em>Condition Register*</em></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>F</td>
+<td>M</td>
+<td>C</td>
+<td>S</td>
+<td>V</td>
+<td>Z</td>
+<td>I</td>
+</tr>
+<tr class="row-even"><td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+</tr>
+</tbody>
+</table>
+<ul class="simple">
+<li>The condition code register is unchanged after this operation</li>
+</ul>
+</div>
+<span class="target" id="module-F100_Opcodes.OpcodeF0_Jump"></span><div class="section" id="jbc-jbs-jcs-jsc-conditional-jump">
+<h3>JBC, JBS, JCS, JSC - Conditional Jump<a class="headerlink" href="#jbc-jbs-jcs-jsc-conditional-jump" title="Permalink to this headline">¶</a></h3>
+<p>These instructions inspect a bit field in the first operand and if the expected condition is satisfied jump to the location specified in the second operand.</p>
+<ul class="simple">
+<li>JBC (Jump bit clear) will jump to the specified destination if the inspected bit is clear (0).<ul>
+<li>JCS extends this operation to set the specified bit after the jump has been made.</li>
+</ul>
+</li>
+<li>JBS (Jump bit set) will jump to the specified destination if the inspected bit is set (1).<ul>
+<li>JSC extends this operation to clear the specified bit after the jump has been made.</li>
+</ul>
+</li>
+</ul>
+<p>Each instruction can specify the bit to be located in one of</p>
+<ul class="simple">
+<li>the Accumulator (A),</li>
+<li>the Condition Register (CR), or</li>
+<li>a memory location (W)</li>
+</ul>
+<p><strong>Function</strong></p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">JBC</span> <span class="n">B</span> <span class="n">A</span>  <span class="n">W1</span>     <span class="k">if</span> <span class="p">(</span><span class="n">A</span><span class="p">[</span><span class="n">B</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="n">PC</span> <span class="o">&lt;-</span> <span class="n">W1</span>
+<span class="n">JBC</span> <span class="n">B</span> <span class="n">CR</span> <span class="n">W1</span>     <span class="k">if</span> <span class="p">(</span><span class="n">CR</span><span class="p">[</span><span class="n">B</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="n">PC</span> <span class="o">&lt;-</span> <span class="n">W1</span>
+<span class="n">JBC</span> <span class="n">B</span> <span class="n">W</span>  <span class="n">W1</span>     <span class="k">if</span> <span class="p">((</span><span class="n">W</span><span class="p">)[</span><span class="n">B</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="n">PC</span> <span class="o">&lt;-</span> <span class="n">W1</span>
+<span class="n">JBS</span> <span class="n">B</span> <span class="n">A</span>  <span class="n">W1</span>     <span class="k">if</span> <span class="p">(</span><span class="n">A</span><span class="p">[</span><span class="n">B</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="n">PC</span> <span class="o">&lt;-</span> <span class="n">W1</span>
+<span class="n">JBS</span> <span class="n">B</span> <span class="n">CR</span> <span class="n">W1</span>     <span class="k">if</span> <span class="p">(</span><span class="n">CR</span><span class="p">[</span><span class="n">B</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="n">PC</span> <span class="o">&lt;-</span> <span class="n">W1</span>
+<span class="n">JBS</span> <span class="n">B</span> <span class="n">W</span>  <span class="n">W1</span>     <span class="k">if</span> <span class="p">((</span><span class="n">W</span><span class="p">)[</span><span class="n">B</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="n">PC</span> <span class="o">&lt;-</span> <span class="n">W1</span>
+<span class="n">JCS</span> <span class="n">B</span> <span class="n">A</span>  <span class="n">W1</span>     <span class="k">if</span> <span class="p">(</span><span class="n">A</span><span class="p">[</span><span class="n">B</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="n">PC</span> <span class="o">&lt;-</span> <span class="n">W1</span> <span class="p">;</span> <span class="n">A</span><span class="p">[</span><span class="n">B</span><span class="p">]</span> <span class="o">&lt;-</span> <span class="mi">1</span>
+<span class="n">JCS</span> <span class="n">B</span> <span class="n">CR</span> <span class="n">W1</span>     <span class="k">if</span> <span class="p">(</span><span class="n">CR</span><span class="p">[</span><span class="n">B</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="n">PC</span> <span class="o">&lt;-</span> <span class="n">W1</span> <span class="p">;</span> <span class="n">CR</span><span class="p">[</span><span class="n">B</span><span class="p">]</span> <span class="o">&lt;-</span> <span class="mi">1</span>
+<span class="n">JCS</span> <span class="n">B</span> <span class="n">W</span>  <span class="n">W1</span>     <span class="k">if</span> <span class="p">((</span><span class="n">W</span><span class="p">)[</span><span class="n">B</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="n">PC</span> <span class="o">&lt;-</span> <span class="n">W1</span> <span class="p">;</span> <span class="p">(</span><span class="n">W</span><span class="p">)[</span><span class="n">B</span><span class="p">]</span> <span class="o">&lt;-</span> <span class="mi">1</span>
+<span class="n">JSC</span> <span class="n">B</span> <span class="n">A</span>  <span class="n">W1</span>     <span class="k">if</span> <span class="p">(</span><span class="n">A</span><span class="p">[</span><span class="n">B</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="n">PC</span> <span class="o">&lt;-</span> <span class="n">W1</span> <span class="p">;</span> <span class="n">A</span><span class="p">[</span><span class="n">B</span><span class="p">]</span> <span class="o">&lt;-</span> <span class="mi">0</span>
+<span class="n">JSC</span> <span class="n">B</span> <span class="n">CR</span> <span class="n">W1</span>     <span class="k">if</span> <span class="p">(</span><span class="n">CR</span><span class="p">[</span><span class="n">B</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="n">PC</span> <span class="o">&lt;-</span> <span class="n">W1</span> <span class="p">;</span> <span class="n">CR</span><span class="p">[</span><span class="n">B</span><span class="p">]</span> <span class="o">&lt;-</span> <span class="mi">0</span>
+<span class="n">JSC</span> <span class="n">B</span> <span class="n">W</span>  <span class="n">W1</span>     <span class="k">if</span> <span class="p">((</span><span class="n">W</span><span class="p">)[</span><span class="n">B</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="n">PC</span> <span class="o">&lt;-</span> <span class="n">W1</span> <span class="p">;</span> <span class="p">(</span><span class="n">W</span><span class="p">)[</span><span class="n">B</span><span class="p">]</span> <span class="o">&lt;-</span> <span class="mi">0</span>
+</pre></div>
+</div>
+<p><strong>Instruction Encoding</strong></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="4%" />
+<col width="1%" />
+<col width="2%" />
+<col width="2%" />
+<col width="2%" />
+<col width="5%" />
+<col width="7%" />
+<col width="1%" />
+<col width="15%" />
+<col width="1%" />
+<col width="15%" />
+<col width="25%" />
+<col width="21%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td colspan="7">Opcode Word</td>
+<td colspan="2" rowspan="2">Operand</td>
+<td colspan="2" rowspan="2">Operand</td>
+<td rowspan="2">Function</td>
+<td rowspan="2">Cycle count</td>
+</tr>
+<tr class="row-even"><td>F</td>
+<td>T</td>
+<td>R</td>
+<td>S</td>
+<td>J</td>
+<td colspan="2">B</td>
+</tr>
+<tr class="row-odd"><td>0000</td>
+<td>0</td>
+<td>x0</td>
+<td>10</td>
+<td>00</td>
+<td colspan="2">4’b&lt;bit field&gt;</td>
+<td>x</td>
+<td>15’b&lt;address W1&gt;</td>
+<td colspan="2">none</td>
+<td>JBC B A  W1</td>
+<td>TBC</td>
+</tr>
+<tr class="row-even"><td>0000</td>
+<td>0</td>
+<td>01</td>
+<td>10</td>
+<td>00</td>
+<td colspan="2">4’b&lt;bit field&gt;</td>
+<td>x</td>
+<td>15’b&lt;address W1&gt;</td>
+<td colspan="2">none</td>
+<td>JBC B CR W1</td>
+<td>TBC</td>
+</tr>
+<tr class="row-odd"><td>0000</td>
+<td>0</td>
+<td>11</td>
+<td>10</td>
+<td>00</td>
+<td colspan="2">4’b&lt;bit field&gt;</td>
+<td>x</td>
+<td>15’b&lt;address W&gt;</td>
+<td>x</td>
+<td>15’b&lt;address W1&gt;</td>
+<td>JBC B W  W1</td>
+<td>TBC</td>
+</tr>
+<tr class="row-even"><td>0000</td>
+<td>0</td>
+<td>x0</td>
+<td>10</td>
+<td>01</td>
+<td colspan="2">4’b&lt;bit field&gt;</td>
+<td>x</td>
+<td>15’b&lt;address W1&gt;</td>
+<td colspan="2">none</td>
+<td>JBS B A  W1</td>
+<td>TBC</td>
+</tr>
+<tr class="row-odd"><td>0000</td>
+<td>0</td>
+<td>01</td>
+<td>10</td>
+<td>01</td>
+<td colspan="2">4’b&lt;bit field&gt;</td>
+<td>x</td>
+<td>15’b&lt;address W1&gt;</td>
+<td colspan="2">none</td>
+<td>JBS B CR W1</td>
+<td>TBC</td>
+</tr>
+<tr class="row-even"><td>0000</td>
+<td>0</td>
+<td>11</td>
+<td>10</td>
+<td>01</td>
+<td colspan="2">4’b&lt;bit field&gt;</td>
+<td>x</td>
+<td>15’b&lt;address W&gt;</td>
+<td>x</td>
+<td>15’b&lt;address W1&gt;</td>
+<td>JBS B W  W1</td>
+<td>TBC</td>
+</tr>
+<tr class="row-odd"><td>0000</td>
+<td>0</td>
+<td>x0</td>
+<td>10</td>
+<td>10</td>
+<td colspan="2">4’b&lt;bit field&gt;</td>
+<td>x</td>
+<td>15’b&lt;address W1&gt;</td>
+<td colspan="2">none</td>
+<td>JCS B A  W1</td>
+<td>TBC</td>
+</tr>
+<tr class="row-even"><td>0000</td>
+<td>0</td>
+<td>01</td>
+<td>10</td>
+<td>10</td>
+<td colspan="2">4’b&lt;bit field&gt;</td>
+<td>x</td>
+<td>15’b&lt;address W1&gt;</td>
+<td colspan="2">none</td>
+<td>JCS B CR W1</td>
+<td>TBC</td>
+</tr>
+<tr class="row-odd"><td>0000</td>
+<td>0</td>
+<td>11</td>
+<td>10</td>
+<td>10</td>
+<td colspan="2">4’b&lt;bit field&gt;</td>
+<td>x</td>
+<td>15’b&lt;address W&gt;</td>
+<td>x</td>
+<td>15’b&lt;address W1&gt;</td>
+<td>JCS B W  W1</td>
+<td>TBC</td>
+</tr>
+<tr class="row-even"><td>0000</td>
+<td>0</td>
+<td>x0</td>
+<td>10</td>
+<td>11</td>
+<td colspan="2">4’b&lt;bit field&gt;</td>
+<td>x</td>
+<td>15’b&lt;address W1&gt;</td>
+<td colspan="2">none</td>
+<td>JSC B A  W1</td>
+<td>TBC</td>
+</tr>
+<tr class="row-odd"><td>0000</td>
+<td>0</td>
+<td>01</td>
+<td>10</td>
+<td>11</td>
+<td colspan="2">4’b&lt;bit field&gt;</td>
+<td>x</td>
+<td>15’b&lt;address W1&gt;</td>
+<td colspan="2">none</td>
+<td>JSC B CR W1</td>
+<td>TBC</td>
+</tr>
+<tr class="row-even"><td>0000</td>
+<td>0</td>
+<td>11</td>
+<td>10</td>
+<td>11</td>
+<td colspan="2">4’b&lt;bit field&gt;</td>
+<td>x</td>
+<td>15’b&lt;address W&gt;</td>
+<td>x</td>
+<td>15’b&lt;address W1&gt;</td>
+<td>JSC B W  W1</td>
+<td>TBC</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Condition Register</strong></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>F</td>
+<td>M</td>
+<td>C</td>
+<td>S</td>
+<td>V</td>
+<td>Z</td>
+<td>I</td>
+</tr>
+<tr class="row-even"><td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+</tr>
+</tbody>
+</table>
+<ul class="simple">
+<li>The condition bits are not evaluated during this instruction, but any bits explicitly set or cleared when using the condition register as the first operand will affect the relevant flag.</li>
+</ul>
+</div>
+<span class="target" id="module-F100_Opcodes.OpcodeF15"></span><div class="section" id="jmp-unconditional-jump">
+<h3>JMP - Unconditional Jump<a class="headerlink" href="#jmp-unconditional-jump" title="Permalink to this headline">¶</a></h3>
+<p>Unconditional jump to the location provided by the operand.</p>
+<p><strong>Function</strong></p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">JMP</span> <span class="n">N</span>      <span class="n">PC</span> <span class="o">&lt;-</span> <span class="n">N</span>
+<span class="n">JMP</span> <span class="p">,</span><span class="n">D</span>     <span class="n">PC</span> <span class="o">&lt;-</span> <span class="n">PC</span> <span class="o">+</span> <span class="mi">1</span>
+<span class="n">JMP</span> <span class="o">/</span><span class="n">P</span>     <span class="n">PC</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span>
+<span class="n">JMP</span> <span class="o">/</span><span class="n">P</span><span class="o">+</span>    <span class="n">P</span> <span class="o">&lt;-</span> <span class="n">P</span><span class="o">+</span><span class="mi">1</span> <span class="p">;</span> <span class="n">PC</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span>
+<span class="n">JMP</span> <span class="o">/</span><span class="n">P</span><span class="o">-</span>    <span class="n">PC</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="p">;</span> <span class="n">P</span> <span class="o">&lt;-</span> <span class="n">P</span> <span class="o">-</span> <span class="mi">1</span>
+<span class="n">JMP</span> <span class="o">.</span><span class="n">W</span>     <span class="n">PC</span> <span class="o">&lt;-</span> <span class="n">W</span>
+</pre></div>
+</div>
+<p>Note that the JMP,D form causes no branching and instruction proceeds to execute the next word (the
+‘D’ effectively) as the next instruction. This instruction is effectively a NOP. The assembler
+discards the literal provided when using this form so that the next assembled instruction will be
+executed.</p>
+<p><strong>Instruction Encoding</strong></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="5%" />
+<col width="1%" />
+<col width="1%" />
+<col width="3%" />
+<col width="23%" />
+<col width="1%" />
+<col width="22%" />
+<col width="14%" />
+<col width="30%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td colspan="5">Opcode Word</td>
+<td colspan="2" rowspan="3">Operand Word</td>
+<td rowspan="3">Function</td>
+<td rowspan="3">Cycle count</td>
+</tr>
+<tr class="row-even"><td rowspan="2">F</td>
+<td rowspan="2">I</td>
+<td colspan="3">N</td>
+</tr>
+<tr class="row-odd"><td>&#160;</td>
+<td>R</td>
+<td>P</td>
+</tr>
+<tr class="row-even"><td>1111</td>
+<td>0</td>
+<td colspan="3">11’b&lt;non-zero addr&gt;</td>
+<td colspan="2">none</td>
+<td>JMP N</td>
+<td>TBC</td>
+</tr>
+<tr class="row-odd"><td>1111</td>
+<td>0</td>
+<td colspan="3">11’b000000000000</td>
+<td colspan="2">none</td>
+<td>JMP ,D</td>
+<td>TBC</td>
+</tr>
+<tr class="row-even"><td>1111</td>
+<td>1</td>
+<td>x</td>
+<td>x0</td>
+<td>8’b&lt;non-zero ptr&gt;</td>
+<td colspan="2">none</td>
+<td>JMP /P</td>
+<td>TBC</td>
+</tr>
+<tr class="row-odd"><td>1111</td>
+<td>1</td>
+<td>x</td>
+<td>01</td>
+<td>8’b&lt;non-zero ptr&gt;</td>
+<td colspan="2">none</td>
+<td>JMP /P+</td>
+<td>TBC</td>
+</tr>
+<tr class="row-even"><td>1111</td>
+<td>1</td>
+<td>x</td>
+<td>11</td>
+<td>8’b&lt;non-zero ptr&gt;</td>
+<td colspan="2">none</td>
+<td>JMP /P-</td>
+<td>TBC</td>
+</tr>
+<tr class="row-odd"><td>1111</td>
+<td>1</td>
+<td>x</td>
+<td>xx</td>
+<td>8’b00000000</td>
+<td>x</td>
+<td>15’b&lt;addr&gt;</td>
+<td>JMP .W</td>
+<td>TBC</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Condition Register</strong></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>F</td>
+<td>M</td>
+<td>C</td>
+<td>S</td>
+<td>V</td>
+<td>Z</td>
+<td>I</td>
+</tr>
+<tr class="row-even"><td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+</tr>
+</tbody>
+</table>
+<ul class="simple">
+<li>The condition register is not affected by this instruction</li>
+</ul>
+</div>
+<span class="target" id="module-F100_Opcodes.OpcodeF8"></span><div class="section" id="lda-load-accumulator-from-memory">
+<h3>LDA - Load Accumulator from Memory<a class="headerlink" href="#lda-load-accumulator-from-memory" title="Permalink to this headline">¶</a></h3>
+<p>Load the accumulator with a value from the specified memory location</p>
+<p><strong>Function</strong></p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">LDA</span> <span class="n">N</span>      <span class="n">A</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">N</span><span class="p">)</span>
+<span class="n">LDA</span> <span class="p">,</span><span class="n">D</span>     <span class="n">A</span> <span class="o">&lt;-</span> <span class="n">D</span>
+<span class="n">LDA</span> <span class="o">/</span><span class="n">P</span>     <span class="n">A</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span>
+<span class="n">LDA</span> <span class="o">/</span><span class="n">P</span><span class="o">+</span>    <span class="n">P</span> <span class="o">&lt;-</span> <span class="n">P</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">;</span> <span class="n">A</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span>
+<span class="n">LDA</span> <span class="o">/</span><span class="n">P</span><span class="o">-</span>    <span class="n">A</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="p">;</span>  <span class="n">P</span> <span class="o">&lt;-</span> <span class="n">P</span> <span class="o">-</span> <span class="mi">1</span>
+<span class="n">LDA</span> <span class="o">.</span><span class="n">W</span>     <span class="n">A</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">W</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Instruction Encoding</strong></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="5%" />
+<col width="1%" />
+<col width="1%" />
+<col width="3%" />
+<col width="23%" />
+<col width="1%" />
+<col width="22%" />
+<col width="14%" />
+<col width="30%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td colspan="5">Opcode Word</td>
+<td colspan="2" rowspan="3">Operand Word</td>
+<td rowspan="3">Function</td>
+<td rowspan="3">Cycle count</td>
+</tr>
+<tr class="row-even"><td rowspan="2">F</td>
+<td rowspan="2">I</td>
+<td colspan="3">N</td>
+</tr>
+<tr class="row-odd"><td>&#160;</td>
+<td>R</td>
+<td>P</td>
+</tr>
+<tr class="row-even"><td>1000</td>
+<td>0</td>
+<td colspan="3">11`b&lt;non-zero addr&gt;</td>
+<td colspan="2">none</td>
+<td>LDA N</td>
+<td>TBC</td>
+</tr>
+<tr class="row-odd"><td>1000</td>
+<td>0</td>
+<td colspan="3">11`b000000000000</td>
+<td colspan="2">16`b&lt;data&gt;</td>
+<td>LDA ,D</td>
+<td>TBC</td>
+</tr>
+<tr class="row-even"><td>1000</td>
+<td>1</td>
+<td>x</td>
+<td>x0</td>
+<td>8`b&lt;non-zero ptr&gt;</td>
+<td colspan="2">none</td>
+<td>LDA /P</td>
+<td>TBC</td>
+</tr>
+<tr class="row-odd"><td>1000</td>
+<td>1</td>
+<td>x</td>
+<td>01</td>
+<td>8`b&lt;non-zero ptr&gt;</td>
+<td colspan="2">none</td>
+<td>LDA /P+</td>
+<td>TBC</td>
+</tr>
+<tr class="row-even"><td>1000</td>
+<td>1</td>
+<td>x</td>
+<td>11</td>
+<td>8`b&lt;non-zero ptr&gt;</td>
+<td colspan="2">none</td>
+<td>LDA /P-</td>
+<td>TBC</td>
+</tr>
+<tr class="row-odd"><td>1000</td>
+<td>1</td>
+<td>x</td>
+<td>xx</td>
+<td>8`b00000000</td>
+<td>x</td>
+<td>15`b&lt;addr&gt;</td>
+<td>LDA .W</td>
+<td>TBC</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Condition Register</strong></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>F</td>
+<td>M</td>
+<td>C</td>
+<td>S</td>
+<td>V</td>
+<td>Z</td>
+<td>I</td>
+</tr>
+<tr class="row-even"><td>–</td>
+<td>–</td>
+<td>–</td>
+<td><ul class="first last simple">
+<li></li>
+</ul>
+</td>
+<td>0</td>
+<td><ul class="first last simple">
+<li></li>
+</ul>
+</td>
+<td>–</td>
+</tr>
+</tbody>
+</table>
+<ul class="simple">
+<li>Z is set if the new accumulator value is all-zeroes, otherwise cleared</li>
+<li>S is set if the MSB of the new accumulator value is a ‘1’, otherwise cleared</li>
+<li>V is always cleared</li>
+</ul>
+</div>
+<span class="target" id="module-F100_Opcodes.OpcodeF13"></span><div class="section" id="neq-logical-xor">
+<h3>NEQ - Logical XOR<a class="headerlink" href="#neq-logical-xor" title="Permalink to this headline">¶</a></h3>
+<p>Perform a bitwise logical exclusive-OR of the Accumulator and specified operand.</p>
+<p><strong>Function</strong></p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">NEQ</span> <span class="n">N</span>      <span class="n">A</span> <span class="o">&lt;-</span> <span class="n">A</span> <span class="o">^</span> <span class="p">(</span><span class="n">N</span><span class="p">)</span>
+<span class="n">NEQ</span> <span class="p">,</span><span class="n">D</span>     <span class="n">A</span> <span class="o">&lt;-</span> <span class="n">A</span> <span class="o">^</span> <span class="n">D</span>
+<span class="n">NEQ</span> <span class="o">/</span><span class="n">P</span>     <span class="n">A</span> <span class="o">&lt;-</span> <span class="n">A</span> <span class="o">^</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span>
+<span class="n">NEQ</span> <span class="o">/</span><span class="n">P</span><span class="o">+</span>    <span class="n">P</span> <span class="o">&lt;-</span> <span class="n">P</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">;</span> <span class="n">A</span> <span class="o">&lt;-</span> <span class="n">A</span> <span class="o">^</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span>
+<span class="n">NEQ</span> <span class="o">/</span><span class="n">P</span><span class="o">-</span>    <span class="n">A</span> <span class="o">&lt;-</span> <span class="n">A</span> <span class="o">^</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="p">;</span> <span class="n">P</span> <span class="o">&lt;-</span> <span class="n">P</span> <span class="o">-</span> <span class="mi">1</span>
+<span class="n">NEQ</span> <span class="o">.</span><span class="n">W</span>     <span class="n">A</span> <span class="o">&lt;-</span> <span class="n">A</span> <span class="o">^</span> <span class="p">(</span><span class="n">W</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Instruction Encoding</strong></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="5%" />
+<col width="1%" />
+<col width="1%" />
+<col width="3%" />
+<col width="23%" />
+<col width="1%" />
+<col width="22%" />
+<col width="14%" />
+<col width="30%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td colspan="5">Opcode Word</td>
+<td colspan="2" rowspan="3">Operand Word</td>
+<td rowspan="3">Function</td>
+<td rowspan="3">Cycle count</td>
+</tr>
+<tr class="row-even"><td rowspan="2">F</td>
+<td rowspan="2">I</td>
+<td colspan="3">N</td>
+</tr>
+<tr class="row-odd"><td>&#160;</td>
+<td>R</td>
+<td>P</td>
+</tr>
+<tr class="row-even"><td>1101</td>
+<td>0</td>
+<td colspan="3">11’b&lt;non-zero addr&gt;</td>
+<td colspan="2">none</td>
+<td>NEQ N</td>
+<td>Ra1 + Ra2 + 18L</td>
+</tr>
+<tr class="row-odd"><td>1101</td>
+<td>0</td>
+<td colspan="3">11’b000000000000</td>
+<td colspan="2">16’b&lt;data&gt;</td>
+<td>NEQ ,D</td>
+<td>Ra1 + Rc1 + 18L</td>
+</tr>
+<tr class="row-even"><td>1101</td>
+<td>1</td>
+<td>x</td>
+<td>x0</td>
+<td>8’b&lt;non-zero ptr&gt;</td>
+<td colspan="2">none</td>
+<td>NEQ /P</td>
+<td>Ra1 + Ra2 + 18L</td>
+</tr>
+<tr class="row-odd"><td>1101</td>
+<td>1</td>
+<td>x</td>
+<td>01</td>
+<td>8’b&lt;non-zero ptr&gt;</td>
+<td colspan="2">none</td>
+<td>NEQ /P+</td>
+<td>Ra1 + M + 34L</td>
+</tr>
+<tr class="row-even"><td>1101</td>
+<td>1</td>
+<td>x</td>
+<td>11</td>
+<td>8’b&lt;non-zero ptr&gt;</td>
+<td colspan="2">none</td>
+<td>NEQ /P-</td>
+<td>Ra1 + M + 34L</td>
+</tr>
+<tr class="row-odd"><td>1101</td>
+<td>1</td>
+<td>x</td>
+<td>xx</td>
+<td>8’b00000000</td>
+<td>x</td>
+<td>15’b&lt;addr&gt;</td>
+<td>NEQ .W</td>
+<td>Ra1 + Ra2 + Rc1 + 18L</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Condition Register</strong></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>F</td>
+<td>M</td>
+<td>C</td>
+<td>S</td>
+<td>V</td>
+<td>Z</td>
+<td>I</td>
+</tr>
+<tr class="row-even"><td>–</td>
+<td>–</td>
+<td>0</td>
+<td><ul class="first last simple">
+<li></li>
+</ul>
+</td>
+<td>x</td>
+<td><ul class="first last simple">
+<li></li>
+</ul>
+</td>
+<td>–</td>
+</tr>
+</tbody>
+</table>
+<ul class="simple">
+<li>C is always reset to 0</li>
+<li>Z is set if the result is all-zeroes, otherwise cleared</li>
+<li>S is set if the MSB of the result is a ‘1’, otherwise cleared</li>
+<li>V is undefined after this operation</li>
+</ul>
+</div>
+<span class="target" id="module-F100_Opcodes.OpcodeF3"></span><div class="section" id="rtn-rtc-return-from-subroutine">
+<h3>RTN, RTC - Return from Subroutine<a class="headerlink" href="#rtn-rtc-return-from-subroutine" title="Permalink to this headline">¶</a></h3>
+<p>These instructions perform a return from subroutine operation.</p>
+<p><strong>RTN</strong> restores bits 0-5 of the Condition Register from the word pointed to by the link stack pointer
+(location 0). The link stack pointer is then decremented to point to the return address, and this
+is placed into the program counter. The link stack pointer is then decremented again to finish
+the instruction pointing to the last valid stack entry.</p>
+<p><strong>RTC</strong> operates in a similar manner but discards the Condition Register entry from the stack.</p>
+<p>NOTE: on entry the link stack pointer must always be an odd number.</p>
+<p><strong>Function</strong></p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">RTN</span>     <span class="n">CR</span><span class="p">[</span><span class="mi">5</span><span class="p">:</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">LSP</span><span class="p">)[</span><span class="mi">5</span><span class="p">:</span><span class="mi">0</span><span class="p">]</span> <span class="p">;</span> <span class="n">LSP</span> <span class="o">&lt;-</span> <span class="n">LSP</span><span class="o">-</span><span class="mi">1</span> <span class="p">;</span> <span class="n">PC</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">LSP</span><span class="p">)</span> <span class="p">;</span> <span class="n">LSP</span> <span class="o">&lt;-</span> <span class="n">LSP</span> <span class="o">-</span> <span class="mi">1</span>
+<span class="n">RTC</span>     <span class="n">PC</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">LSP</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">;</span> <span class="n">LSP</span> <span class="o">&lt;-</span> <span class="n">LSP</span> <span class="o">-</span> <span class="mi">2</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li>Where LSP = Link Stack Pointer which is always held in location 0 in memory</li>
+</ul>
+<p><strong>Instruction Encoding</strong></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="7%" />
+<col width="2%" />
+<col width="2%" />
+<col width="4%" />
+<col width="30%" />
+<col width="18%" />
+<col width="39%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td colspan="5">Opcode Word</td>
+<td rowspan="3">Function</td>
+<td rowspan="3">Cycle count</td>
+</tr>
+<tr class="row-even"><td rowspan="2">F</td>
+<td rowspan="2">I</td>
+<td colspan="3">N</td>
+</tr>
+<tr class="row-odd"><td>&#160;</td>
+<td>R</td>
+<td>P</td>
+</tr>
+<tr class="row-even"><td>0011</td>
+<td>0</td>
+<td colspan="3">11’bxxxxxxxxxxx</td>
+<td>RTN</td>
+<td>TBC</td>
+</tr>
+<tr class="row-odd"><td>0011</td>
+<td>1</td>
+<td colspan="3">11’bxxxxxxxxxxx</td>
+<td>RTC</td>
+<td>TBC</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Condition Register</strong></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="8%" />
+<col width="8%" />
+<col width="8%" />
+<col width="8%" />
+<col width="8%" />
+<col width="8%" />
+<col width="8%" />
+<col width="45%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>F</td>
+<td>M</td>
+<td>C</td>
+<td>S</td>
+<td>V</td>
+<td>Z</td>
+<td>I</td>
+<td>Instruction</td>
+</tr>
+<tr class="row-even"><td>–</td>
+<td><ul class="first last simple">
+<li></li>
+</ul>
+</td>
+<td><ul class="first last simple">
+<li></li>
+</ul>
+</td>
+<td><ul class="first last simple">
+<li></li>
+</ul>
+</td>
+<td><ul class="first last simple">
+<li></li>
+</ul>
+</td>
+<td><ul class="first last simple">
+<li></li>
+</ul>
+</td>
+<td><ul class="first last simple">
+<li></li>
+</ul>
+</td>
+<td>RTN</td>
+</tr>
+<tr class="row-odd"><td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>RTC</td>
+</tr>
+</tbody>
+</table>
+<ul class="simple">
+<li>Bit 6, the Fail flag entry, is not overwritten by either of these instructions.</li>
+</ul>
+</div>
+<span class="target" id="module-F100_Opcodes.OpcodeF6"></span><div class="section" id="sbs-subtract-with-carry-store-to-memory">
+<h3>SBS - Subtract (With Carry), Store to Memory<a class="headerlink" href="#sbs-subtract-with-carry-store-to-memory" title="Permalink to this headline">¶</a></h3>
+<p>Perform substraction of the accumulator from the value of an operand with the
+result being stored in the operand’s original location.</p>
+<p>When the multi-length ‘M’ flag is set, the carry bit from a previous operation is
+included in the subtraction.</p>
+<p><strong>Function</strong></p>
+<p>When M is clear, perform a simple subtraction</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">SBS</span> <span class="n">N</span>      <span class="p">(</span><span class="n">N</span><span class="p">)</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">N</span><span class="p">)</span> <span class="o">-</span> <span class="n">A</span>
+<span class="n">SBS</span> <span class="p">,</span><span class="n">D</span>     <span class="p">(</span><span class="n">PC</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">&lt;-</span> <span class="n">D</span> <span class="o">-</span> <span class="n">A</span>
+<span class="n">SBS</span> <span class="o">/</span><span class="n">P</span>     <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">-</span> <span class="n">A</span>
+<span class="n">SBS</span> <span class="o">/</span><span class="n">P</span><span class="o">+</span>    <span class="n">P</span> <span class="o">&lt;-</span> <span class="n">P</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">;</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">-</span> <span class="n">A</span>
+<span class="n">SBS</span> <span class="o">/</span><span class="n">P</span><span class="o">-</span>    <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">-</span> <span class="n">A</span> <span class="p">;</span> <span class="n">P</span> <span class="o">&lt;-</span> <span class="n">P</span> <span class="o">-</span> <span class="mi">1</span>
+<span class="n">SBS</span> <span class="o">.</span><span class="n">W</span>     <span class="p">(</span><span class="n">W</span><span class="p">)</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">W</span><span class="p">)</span> <span class="o">-</span> <span class="n">A</span>
+</pre></div>
+</div>
+<p>When M is set, include the carry from a previous operation in the subtraction</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">SBS</span> <span class="n">N</span>      <span class="p">(</span><span class="n">N</span><span class="p">)</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">N</span><span class="p">)</span> <span class="o">-</span> <span class="n">A</span> <span class="o">+</span> <span class="n">C</span> <span class="o">-</span> <span class="mi">1</span>
+<span class="n">SBS</span> <span class="p">,</span><span class="n">D</span>     <span class="p">(</span><span class="n">PC</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">&lt;-</span> <span class="n">D</span> <span class="o">-</span> <span class="n">A</span> <span class="o">+</span> <span class="n">C</span> <span class="o">-</span> <span class="mi">1</span>
+<span class="n">SBS</span> <span class="o">/</span><span class="n">P</span>     <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">-</span> <span class="n">A</span> <span class="o">+</span> <span class="n">C</span> <span class="o">-</span> <span class="mi">1</span>
+<span class="n">SBS</span> <span class="o">/</span><span class="n">P</span><span class="o">+</span>    <span class="n">P</span> <span class="o">&lt;-</span> <span class="n">P</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">;</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">-</span> <span class="n">A</span> <span class="o">+</span> <span class="n">C</span> <span class="o">-</span> <span class="mi">1</span>
+<span class="n">SBS</span> <span class="o">/</span><span class="n">P</span><span class="o">-</span>    <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">-</span> <span class="n">A</span> <span class="o">+</span> <span class="n">C</span> <span class="o">-</span> <span class="mi">1</span> <span class="p">;</span> <span class="n">P</span> <span class="o">&lt;-</span> <span class="n">P</span> <span class="o">-</span> <span class="mi">1</span>
+<span class="n">SBS</span> <span class="o">.</span><span class="n">W</span>     <span class="p">(</span><span class="n">W</span><span class="p">)</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">W</span><span class="p">)</span> <span class="o">-</span> <span class="n">A</span> <span class="o">+</span> <span class="n">C</span> <span class="o">-</span> <span class="mi">1</span>
+</pre></div>
+</div>
+<p>In the immediate mode operation, data ‘D’ is taken from the location (PC+1), ie the word immediately
+after the opcode, and the the result is returned to that location.</p>
+<p><strong>Instruction Encoding</strong></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="5%" />
+<col width="1%" />
+<col width="1%" />
+<col width="3%" />
+<col width="3%" />
+<col width="19%" />
+<col width="1%" />
+<col width="22%" />
+<col width="14%" />
+<col width="30%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td colspan="6">Opcode Word</td>
+<td colspan="2" rowspan="3">Operand Word</td>
+<td rowspan="3">Function</td>
+<td rowspan="3">Cycle count</td>
+</tr>
+<tr class="row-even"><td rowspan="2">F</td>
+<td rowspan="2">I</td>
+<td colspan="4">N</td>
+</tr>
+<tr class="row-odd"><td>&#160;</td>
+<td>R</td>
+<td colspan="2">P</td>
+</tr>
+<tr class="row-even"><td>0110</td>
+<td>0</td>
+<td colspan="4">11’b&lt;non-zero addr&gt;</td>
+<td colspan="2">none</td>
+<td>SBS N</td>
+<td>TBC</td>
+</tr>
+<tr class="row-odd"><td>0110</td>
+<td>0</td>
+<td colspan="4">11’b000000000000</td>
+<td colspan="2">16’b&lt;data&gt;</td>
+<td>SBS ,D</td>
+<td>TBC</td>
+</tr>
+<tr class="row-even"><td>0110</td>
+<td>1</td>
+<td>x</td>
+<td>x0</td>
+<td colspan="2">8’b&lt;non-zero ptr&gt;</td>
+<td colspan="2">none</td>
+<td>SBS /P</td>
+<td>TBC</td>
+</tr>
+<tr class="row-odd"><td>0110</td>
+<td>1</td>
+<td>x</td>
+<td>01</td>
+<td colspan="2">8’b&lt;non-zero ptr&gt;</td>
+<td colspan="2">none</td>
+<td>SBS /P+</td>
+<td>TBC</td>
+</tr>
+<tr class="row-even"><td>0110</td>
+<td>1</td>
+<td>x</td>
+<td>11</td>
+<td colspan="2">8’b&lt;non-zero ptr&gt;</td>
+<td colspan="2">none</td>
+<td>SBS /P-</td>
+<td>TBC</td>
+</tr>
+<tr class="row-odd"><td>0110</td>
+<td>1</td>
+<td>x</td>
+<td>xx</td>
+<td colspan="2">8’b00000000</td>
+<td>x</td>
+<td>15’b&lt;addr&gt;</td>
+<td>SBS .W</td>
+<td>TBC</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Condition Register</strong></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>F</td>
+<td>M</td>
+<td>C</td>
+<td>S</td>
+<td>V</td>
+<td>Z</td>
+<td>I</td>
+</tr>
+<tr class="row-even"><td>–</td>
+<td>–</td>
+<td><ul class="first last simple">
+<li></li>
+</ul>
+</td>
+<td><ul class="first last simple">
+<li></li>
+</ul>
+</td>
+<td><ul class="first last simple">
+<li></li>
+</ul>
+</td>
+<td><ul class="first last simple">
+<li></li>
+</ul>
+</td>
+<td>–</td>
+</tr>
+</tbody>
+</table>
+<ul class="simple">
+<li>C is cleared if the operation results in a borrow (carry), otherwise set</li>
+<li>Z is set if the result is all-zeroes, otherwise cleared</li>
+<li>S is set if the MSB of the result is a ‘1’, otherwise cleared</li>
+<li>V is set if the subtraction of two numbers of different sign results in
+a number with the same sign as the subtrahend, otherwise cleared</li>
+</ul>
+</div>
+<span class="target" id="module-F100_Opcodes.OpcodeF1"></span><div class="section" id="sjm-switch-jump">
+<h3>SJM - Switch Jump<a class="headerlink" href="#sjm-switch-jump" title="Permalink to this headline">¶</a></h3>
+<p>The contents of the accumulator are added to the contents of the program counter (which has
+already been incremented to point to the next instruction). If the value of the accumulator
+is zero then the program will continue execution in sequence.</p>
+<p>Note that the MSB of the result is always discarded, so that the program counter value will
+never exceed the 15b address range of the machine.</p>
+<p><strong>Function</strong></p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">SJM</span>    <span class="n">PC</span> <span class="o">&lt;-</span> <span class="n">PC</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">A</span>
+</pre></div>
+</div>
+<p><strong>Instruction Encoding</strong></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="6%" />
+<col width="45%" />
+<col width="15%" />
+<col width="34%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td colspan="2">Opcode Word</td>
+<td rowspan="2">Function</td>
+<td rowspan="2">Cycle count</td>
+</tr>
+<tr class="row-even"><td>F</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td>0001</td>
+<td>12’bxxxxxxxxxxxx</td>
+<td>SJM</td>
+<td>TBC</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Condition Register</strong></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>F</td>
+<td>M</td>
+<td>C</td>
+<td>S</td>
+<td>V</td>
+<td>Z</td>
+<td>I</td>
+</tr>
+<tr class="row-even"><td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+</tr>
+</tbody>
+</table>
+<ul class="simple">
+<li>The Condition Register is unaffected by the addition in this instruction.</li>
+</ul>
+</div>
+<span class="target" id="module-F100_Opcodes.OpcodeF0_Shift"></span><div class="section" id="sla-sle-sll-sra-sre-srl-shift-and-rotation">
+<h3>SLA,SLE,SLL,SRA,SRE,SRL - Shift and Rotation<a class="headerlink" href="#sla-sle-sll-sra-sre-srl-shift-and-rotation" title="Permalink to this headline">¶</a></h3>
+<p>These instructions perform single or multi-length shifts and rotations of a specified register or memory location.</p>
+<p>Several different types of shift are available</p>
+<ul class="simple">
+<li>SLA - Shift Left Arithmetic<ul>
+<li>All bits are shifted left by the specified number of places, and the incoming LSBs are filled with ‘0’</li>
+</ul>
+</li>
+<li>SRA - Shift Right Arithmetic<ul>
+<li>All bits are shifted right by the specified number of places, and the original sign bit is extended to fill the incoming MSBs</li>
+</ul>
+</li>
+<li>SLL - Shift Left Logical<ul>
+<li>All bits are shifted left by the specified number of places, and the incoming LSBs are filled with ‘0’.</li>
+<li>NB This is exactly the same data operation as SLA, but the flags are handled differently (see below)</li>
+</ul>
+</li>
+<li>SRL - Shift Right Logical<ul>
+<li>All bits are shifted right by the specified number of places, and the incoming MSBs are filled with ‘0’</li>
+</ul>
+</li>
+<li>SLE - Rotate Left (Shift Left End-around)<ul>
+<li>All bits are rotated left by the specified number of places, with the MSBs being recirculated into the LSB positions</li>
+</ul>
+</li>
+<li>SRE - Rotate Right (Shift Right End-around)<ul>
+<li>All bits are shifted right by the specified number of places, with the LSBs being recirculated into the MSB positions</li>
+</ul>
+</li>
+</ul>
+<p>The data to be shifted can be one of</p>
+<ul class="simple">
+<li>the Accumulator (A),</li>
+<li>the Condition Register (CR), or</li>
+<li>a memory location (W)</li>
+</ul>
+<p>The shifts will be either single length, if the ‘M’ flag is clear, or double length if ‘M’ is set.</p>
+<p>Any shifts where the Condition Register itself is to be shifted will treat that register as a bit
+pattern and all bits will be left in the shifted state at the end of the instruction.</p>
+<div class="section" id="single-length-shifts">
+<h4>Single Length Shifts<a class="headerlink" href="#single-length-shifts" title="Permalink to this headline">¶</a></h4>
+<p>When ‘M’ is clear the bottom 4 LSBs of the Opcode word determine the number of places, n,  to shift, ie 0&lt;=n&lt;=15.</p>
+<p>In single length operation the data to be shifted can be one of</p>
+<ul class="simple">
+<li>the Accumulator (A),</li>
+<li>the Condition Register (CR), or</li>
+<li>a memory location (W)</li>
+</ul>
+<p>The result for single length shifts is always held in the accumulator.</p>
+<p><strong>Function</strong></p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">SLL</span>  <span class="n">B</span> <span class="n">A</span>      <span class="n">A</span> <span class="o">&lt;-</span> <span class="n">A</span> <span class="o">&lt;&lt;</span> <span class="n">B</span>
+<span class="n">SLL</span>  <span class="n">B</span> <span class="n">CR</span>     <span class="n">CR</span> <span class="o">&lt;-</span> <span class="n">CR</span> <span class="o">&lt;&lt;</span> <span class="n">B</span>
+<span class="n">SLL</span>  <span class="n">B</span> <span class="n">W</span>      <span class="n">A</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">W</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="n">B</span>
+<span class="n">SLA</span>  <span class="n">B</span> <span class="n">A</span>      <span class="n">A</span> <span class="o">&lt;-</span> <span class="n">A</span> <span class="o">&lt;&lt;</span> <span class="n">B</span>
+<span class="n">SLA</span>  <span class="n">B</span> <span class="n">CR</span>     <span class="n">CR</span> <span class="o">&lt;-</span> <span class="n">CR</span> <span class="o">&lt;&lt;</span> <span class="n">B</span>
+<span class="n">SLA</span>  <span class="n">B</span> <span class="n">W</span>      <span class="n">A</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">W</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="n">B</span>
+<span class="n">SRL</span>  <span class="n">B</span> <span class="n">A</span>      <span class="n">A</span> <span class="o">&lt;-</span> <span class="n">A</span> <span class="o">&gt;&gt;&gt;</span> <span class="n">B</span>
+<span class="n">SRL</span>  <span class="n">B</span> <span class="n">CR</span>     <span class="n">CR</span> <span class="o">&lt;-</span> <span class="n">CR</span> <span class="o">&gt;&gt;&gt;</span> <span class="n">B</span>
+<span class="n">SRL</span>  <span class="n">B</span> <span class="n">W</span>      <span class="n">A</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">W</span><span class="p">)</span> <span class="o">&gt;&gt;&gt;</span> <span class="n">B</span>
+<span class="n">SRA</span>  <span class="n">B</span> <span class="n">A</span>      <span class="n">A</span> <span class="o">&lt;-</span> <span class="n">A</span> <span class="o">&gt;&gt;</span> <span class="n">B</span>
+<span class="n">SRA</span>  <span class="n">B</span> <span class="n">CR</span>     <span class="n">CR</span> <span class="o">&lt;-</span> <span class="n">CR</span> <span class="o">&gt;&gt;</span> <span class="n">B</span>
+<span class="n">SRA</span>  <span class="n">B</span> <span class="n">W</span>      <span class="n">A</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">W</span><span class="p">)</span> <span class="o">&gt;&gt;</span> <span class="n">B</span>
+</pre></div>
+</div>
+<p><strong>Instruction Encoding</strong></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="4%" />
+<col width="2%" />
+<col width="2%" />
+<col width="2%" />
+<col width="2%" />
+<col width="15%" />
+<col width="1%" />
+<col width="16%" />
+<col width="30%" />
+<col width="24%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td colspan="6">Opcode Word</td>
+<td colspan="2" rowspan="2">Operand</td>
+<td rowspan="2">Function</td>
+<td rowspan="2">Cycle count</td>
+</tr>
+<tr class="row-even"><td>F</td>
+<td>T</td>
+<td>R</td>
+<td>S</td>
+<td>J</td>
+<td>B</td>
+</tr>
+<tr class="row-odd"><td>0000</td>
+<td>00</td>
+<td>x0</td>
+<td>00</td>
+<td>0x</td>
+<td>4’b&lt;shift num&gt;</td>
+<td colspan="2">none</td>
+<td>SRA B A</td>
+<td>TBC</td>
+</tr>
+<tr class="row-even"><td>0000</td>
+<td>00</td>
+<td>x0</td>
+<td>00</td>
+<td>10</td>
+<td>4’b&lt;shift num&gt;</td>
+<td colspan="2">none</td>
+<td>SRL B A</td>
+<td>TBC</td>
+</tr>
+<tr class="row-odd"><td>0000</td>
+<td>00</td>
+<td>01</td>
+<td>00</td>
+<td>0x</td>
+<td>4’b&lt;shift num&gt;</td>
+<td colspan="2">none</td>
+<td>SRA B CR</td>
+<td>TBC</td>
+</tr>
+<tr class="row-even"><td>0000</td>
+<td>00</td>
+<td>01</td>
+<td>00</td>
+<td>10</td>
+<td>4’b&lt;shift num&gt;</td>
+<td colspan="2">none</td>
+<td>SRL B CR</td>
+<td>TBC</td>
+</tr>
+<tr class="row-odd"><td>0000</td>
+<td>00</td>
+<td>11</td>
+<td>00</td>
+<td>0x</td>
+<td>4’b&lt;shift num&gt;</td>
+<td>x</td>
+<td>15’b&lt;addr&gt;</td>
+<td>SRA B W</td>
+<td>TBC</td>
+</tr>
+<tr class="row-even"><td>0000</td>
+<td>00</td>
+<td>11</td>
+<td>00</td>
+<td>10</td>
+<td>4’b&lt;shift num&gt;</td>
+<td>x</td>
+<td>15’b&lt;addr&gt;</td>
+<td>SRL B W</td>
+<td>TBC</td>
+</tr>
+<tr class="row-odd"><td>0000</td>
+<td>00</td>
+<td>x0</td>
+<td>01</td>
+<td>0x</td>
+<td>4’b&lt;shift num&gt;</td>
+<td colspan="2">none</td>
+<td>SLA B A</td>
+<td>TBC</td>
+</tr>
+<tr class="row-even"><td>0000</td>
+<td>00</td>
+<td>x0</td>
+<td>01</td>
+<td>10</td>
+<td>4’b&lt;shift num&gt;</td>
+<td colspan="2">none</td>
+<td>SLL B A</td>
+<td>TBC</td>
+</tr>
+<tr class="row-odd"><td>0000</td>
+<td>00</td>
+<td>01</td>
+<td>01</td>
+<td>0x</td>
+<td>4’b&lt;shift num&gt;</td>
+<td colspan="2">none</td>
+<td>SLA B CR</td>
+<td>TBC</td>
+</tr>
+<tr class="row-even"><td>0000</td>
+<td>00</td>
+<td>01</td>
+<td>01</td>
+<td>10</td>
+<td>4’b&lt;shift num&gt;</td>
+<td colspan="2">none</td>
+<td>SLL B CR</td>
+<td>TBC</td>
+</tr>
+<tr class="row-odd"><td>0000</td>
+<td>00</td>
+<td>11</td>
+<td>01</td>
+<td>0x</td>
+<td>4’b&lt;shift num&gt;</td>
+<td>x</td>
+<td>15’b&lt;addr&gt;</td>
+<td>SLA B W</td>
+<td>TBC</td>
+</tr>
+<tr class="row-even"><td>0000</td>
+<td>00</td>
+<td>11</td>
+<td>01</td>
+<td>10</td>
+<td>4’b&lt;shift num&gt;</td>
+<td>x</td>
+<td>15’b&lt;addr&gt;</td>
+<td>SLL B W</td>
+<td>TBC</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Condition Register</strong></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="8%" />
+<col width="8%" />
+<col width="8%" />
+<col width="8%" />
+<col width="8%" />
+<col width="8%" />
+<col width="8%" />
+<col width="48%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>F</td>
+<td>M</td>
+<td>C</td>
+<td>S</td>
+<td>V</td>
+<td>Z</td>
+<td>I</td>
+<td>Shift Type</td>
+</tr>
+<tr class="row-even"><td>–</td>
+<td>–</td>
+<td>–</td>
+<td><ul class="first last simple">
+<li></li>
+</ul>
+</td>
+<td><ul class="first last simple">
+<li></li>
+</ul>
+</td>
+<td>x</td>
+<td>–</td>
+<td>Arithmetic Shifts</td>
+</tr>
+<tr class="row-odd"><td>–</td>
+<td>–</td>
+<td>–</td>
+<td>x</td>
+<td>x</td>
+<td>x</td>
+<td>–</td>
+<td>Logical Shifts</td>
+</tr>
+</tbody>
+</table>
+<p>For arithmetic shift operations <em>not</em> specifying the Condition Register:</p>
+<blockquote>
+<div><ul class="simple">
+<li>S is set if the MSB of the shifted data is ‘1’, otherwise cleared</li>
+<li>V is set if the MSB of the shifted data is permanently or temporarily different to its original state, ie for multiple place shifts the flag is set if any bit passing through the MSB position is different to the original sign even if the shift finishes with the sign bit apparently unchanged.</li>
+<li>C is preserved</li>
+<li>Z is meaningless at the end of the instruction</li>
+</ul>
+</div></blockquote>
+<p>For logical shift operations <em>not</em> specifying the Condition Register:</p>
+<blockquote>
+<div><ul class="simple">
+<li>C is preserved</li>
+<li>V, Z and S are meaningless</li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="single-length-rotations">
+<h4>Single Length Rotations<a class="headerlink" href="#single-length-rotations" title="Permalink to this headline">¶</a></h4>
+<p><strong>Function</strong></p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">SLE</span>  <span class="n">B</span> <span class="n">A</span>      <span class="n">A</span> <span class="o">&lt;-</span> <span class="n">_rotl</span><span class="p">(</span><span class="n">A</span><span class="p">,</span><span class="n">B</span><span class="p">)</span>
+<span class="n">SLE</span>  <span class="n">B</span> <span class="n">CR</span>     <span class="n">CR</span> <span class="o">&lt;-</span> <span class="n">_rotl</span><span class="p">(</span><span class="n">CR</span><span class="p">,</span><span class="n">B</span><span class="p">)</span>
+<span class="n">SLE</span>  <span class="n">B</span> <span class="n">W</span>      <span class="n">A</span> <span class="o">&lt;-</span> <span class="n">_rotl</span><span class="p">((</span><span class="n">W</span><span class="p">),</span><span class="n">B</span><span class="p">)</span>
+<span class="n">SRE</span>  <span class="n">B</span> <span class="n">A</span>      <span class="n">A</span> <span class="o">&lt;-</span> <span class="n">_rotr</span><span class="p">(</span><span class="n">A</span><span class="p">,</span><span class="n">B</span><span class="p">)</span>
+<span class="n">SRE</span>  <span class="n">B</span> <span class="n">CR</span>     <span class="n">CR</span> <span class="o">&lt;-</span> <span class="n">_rotr</span><span class="p">(</span><span class="n">CR</span><span class="p">,</span><span class="n">B</span><span class="p">)</span>
+<span class="n">SRE</span>  <span class="n">B</span> <span class="n">W</span>      <span class="n">A</span> <span class="o">&lt;-</span> <span class="n">_rotr</span><span class="p">((</span><span class="n">W</span><span class="p">),</span><span class="n">B</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Instruction Encoding</strong></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="4%" />
+<col width="2%" />
+<col width="2%" />
+<col width="2%" />
+<col width="2%" />
+<col width="15%" />
+<col width="1%" />
+<col width="16%" />
+<col width="30%" />
+<col width="24%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td colspan="6">Opcode Word</td>
+<td colspan="2" rowspan="2">Operand</td>
+<td rowspan="2">Function</td>
+<td rowspan="2">Cycle count</td>
+</tr>
+<tr class="row-even"><td>F</td>
+<td>T</td>
+<td>R</td>
+<td>S</td>
+<td>J</td>
+<td>B</td>
+</tr>
+<tr class="row-odd"><td>0000</td>
+<td>00</td>
+<td>x0</td>
+<td>00</td>
+<td>11</td>
+<td>4’b&lt;shift num&gt;</td>
+<td colspan="2">none</td>
+<td>SRE B A</td>
+<td>TBC</td>
+</tr>
+<tr class="row-even"><td>0000</td>
+<td>00</td>
+<td>01</td>
+<td>00</td>
+<td>11</td>
+<td>4’b&lt;shift num&gt;</td>
+<td colspan="2">none</td>
+<td>SRE B CR</td>
+<td>TBC</td>
+</tr>
+<tr class="row-odd"><td>0000</td>
+<td>00</td>
+<td>11</td>
+<td>00</td>
+<td>11</td>
+<td>4’b&lt;shift num&gt;</td>
+<td>x</td>
+<td>15’b&lt;addr&gt;</td>
+<td>SRE B W</td>
+<td>TBC</td>
+</tr>
+<tr class="row-even"><td>0000</td>
+<td>00</td>
+<td>x0</td>
+<td>01</td>
+<td>11</td>
+<td>4’b&lt;shift num&gt;</td>
+<td colspan="2">none</td>
+<td>SLE B A</td>
+<td>TBC</td>
+</tr>
+<tr class="row-odd"><td>0000</td>
+<td>00</td>
+<td>01</td>
+<td>01</td>
+<td>11</td>
+<td>4’b&lt;shift num&gt;</td>
+<td colspan="2">none</td>
+<td>SLE B CR</td>
+<td>TBC</td>
+</tr>
+<tr class="row-even"><td>0000</td>
+<td>00</td>
+<td>11</td>
+<td>01</td>
+<td>11</td>
+<td>4’b&lt;shift num&gt;</td>
+<td>x</td>
+<td>15’b&lt;addr&gt;</td>
+<td>SLE B W</td>
+<td>TBC</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Condition Register</strong></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>F</td>
+<td>M</td>
+<td>C</td>
+<td>S</td>
+<td>V</td>
+<td>Z</td>
+<td>I</td>
+</tr>
+<tr class="row-even"><td>–</td>
+<td>–</td>
+<td>–</td>
+<td>x</td>
+<td>x</td>
+<td>x</td>
+<td>–</td>
+</tr>
+</tbody>
+</table>
+<p>For operations <em>not</em> specifying the Condition register:</p>
+<blockquote>
+<div><ul class="simple">
+<li>C is preserved</li>
+<li>S, V and Z are meaningless at the end of the instruction</li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="double-length-shifts">
+<h4>Double Length Shifts<a class="headerlink" href="#double-length-shifts" title="Permalink to this headline">¶</a></h4>
+<p>When ‘M’ is set, a double length operation is performed on a 32-bit word which is made up of the Accumulator
+in the 16 MSBs and the internal Operand Register providing the lower 16 bits. The contents of the Operand
+Register are dependent on the previous instruction.</p>
+<p>In double length mode the number of bit positions to be shifted is taken from the 5 LSBs of the opcode word.
+The lower 4 LSBs are the same bit as used in the single-length mode, but the 5th bit (the MSB) is taken from
+one of the bit fields used to select between logical, arithmetic and rotate variations. Executing a shift
+originally assembled as a single-length operation but with the M flag set to ‘1’ can therefore have
+unexpected results. For this reason the assembler provides a specific mnemonic for the double length
+operations ending with a .D suffix. The programmer is responsible for ensuring that the M flag is in the
+correct state before executing either a single or double length operation.</p>
+<p>In double length mode, the rotate operations are undefined.</p>
+<p><strong>Function</strong></p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">SLA</span><span class="o">.</span><span class="n">D</span> <span class="n">B</span> <span class="n">A</span>  <span class="p">{</span><span class="n">A</span><span class="p">,</span> <span class="n">OR</span><span class="p">}</span> <span class="o">&lt;-</span> <span class="p">{</span><span class="n">A</span><span class="p">,</span> <span class="n">OR</span><span class="p">}</span> <span class="o">&lt;&lt;</span> <span class="n">B</span>
+<span class="n">SLL</span><span class="o">.</span><span class="n">D</span> <span class="n">B</span> <span class="n">A</span>  <span class="p">{</span><span class="n">A</span><span class="p">,</span> <span class="n">OR</span><span class="p">}</span> <span class="o">&lt;-</span> <span class="p">{</span><span class="n">A</span><span class="p">,</span> <span class="n">OR</span><span class="p">}</span> <span class="o">&lt;&lt;</span> <span class="n">B</span>
+<span class="n">SRA</span><span class="o">.</span><span class="n">D</span> <span class="n">B</span> <span class="n">A</span>  <span class="p">{</span><span class="n">A</span><span class="p">,</span> <span class="n">OR</span><span class="p">}</span> <span class="o">&lt;-</span> <span class="p">{</span><span class="n">A</span><span class="p">,</span> <span class="n">OR</span><span class="p">}</span> <span class="o">&gt;&gt;</span> <span class="n">B</span>
+<span class="n">SRL</span><span class="o">.</span><span class="n">D</span> <span class="n">B</span> <span class="n">A</span>  <span class="p">{</span><span class="n">A</span><span class="p">,</span> <span class="n">OR</span><span class="p">}</span> <span class="o">&lt;-</span> <span class="p">{</span><span class="n">A</span><span class="p">,</span> <span class="n">OR</span><span class="p">}</span> <span class="o">&gt;&gt;&gt;</span> <span class="n">B</span>
+</pre></div>
+</div>
+<p><strong>Instruction Encoding</strong></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="4%" />
+<col width="2%" />
+<col width="2%" />
+<col width="2%" />
+<col width="1%" />
+<col width="1%" />
+<col width="15%" />
+<col width="1%" />
+<col width="16%" />
+<col width="30%" />
+<col width="24%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td colspan="7">Opcode Word</td>
+<td colspan="2" rowspan="2">Operand</td>
+<td rowspan="2">Function</td>
+<td rowspan="2">Cycle count</td>
+</tr>
+<tr class="row-even"><td>F</td>
+<td>T</td>
+<td>R</td>
+<td>S</td>
+<td colspan="2">J</td>
+<td>B</td>
+</tr>
+<tr class="row-odd"><td>0000</td>
+<td>00</td>
+<td>xx</td>
+<td>00</td>
+<td>0</td>
+<td colspan="2">5’b&lt;shift num&gt;</td>
+<td colspan="2">none</td>
+<td>SRA.D B A</td>
+<td>TBC</td>
+</tr>
+<tr class="row-even"><td>0000</td>
+<td>00</td>
+<td>xx</td>
+<td>00</td>
+<td>1</td>
+<td colspan="2">5’b&lt;shift num&gt;</td>
+<td colspan="2">none</td>
+<td>SRL.D B A</td>
+<td>TBC</td>
+</tr>
+<tr class="row-odd"><td>0000</td>
+<td>00</td>
+<td>xx</td>
+<td>01</td>
+<td>0</td>
+<td colspan="2">5’b&lt;shift num&gt;</td>
+<td colspan="2">none</td>
+<td>SLA.D B A</td>
+<td>TBC</td>
+</tr>
+<tr class="row-even"><td>0000</td>
+<td>00</td>
+<td>xx</td>
+<td>01</td>
+<td>1</td>
+<td colspan="2">5’b&lt;shift num&gt;</td>
+<td colspan="2">none</td>
+<td>SLL.D B A</td>
+<td>TBC</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Condition Register</strong></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="8%" />
+<col width="8%" />
+<col width="8%" />
+<col width="8%" />
+<col width="8%" />
+<col width="8%" />
+<col width="8%" />
+<col width="48%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>F</td>
+<td>M</td>
+<td>C</td>
+<td>S</td>
+<td>V</td>
+<td>Z</td>
+<td>I</td>
+<td>Shift Type</td>
+</tr>
+<tr class="row-even"><td>–</td>
+<td>–</td>
+<td>–</td>
+<td><ul class="first last simple">
+<li></li>
+</ul>
+</td>
+<td><ul class="first last simple">
+<li></li>
+</ul>
+</td>
+<td>x</td>
+<td>–</td>
+<td>Arithmetic Shifts</td>
+</tr>
+<tr class="row-odd"><td>–</td>
+<td>–</td>
+<td>–</td>
+<td>x</td>
+<td>x</td>
+<td>x</td>
+<td>–</td>
+<td>Logical Shifts</td>
+</tr>
+</tbody>
+</table>
+<p>For arithmetic shift operations <em>not</em> specifying the Condition Register:</p>
+<blockquote>
+<div><ul class="simple">
+<li>S is set if the MSB of the shifted data is ‘1’, otherwise cleared</li>
+<li>V is set if the MSB of the shifted data is permanently or temporarily different to its original state, ie for multiple place shifts the flag is set if any bit passing through the MSB position is different to the original sign even if the shift finishes with the sign bit apparently unchanged.</li>
+<li>C is preserved</li>
+<li>Z is meaningless at the end of the instruction</li>
+</ul>
+</div></blockquote>
+<p>For logical shift operations <em>not</em> specifying the Condition Register:</p>
+<blockquote>
+<div><ul class="simple">
+<li>C is preserved</li>
+<li>V, Z and S are meaningless</li>
+</ul>
+</div></blockquote>
+</div>
+</div>
+<span class="target" id="module-F100_Opcodes.OpcodeF4"></span><div class="section" id="sto-store-accumulator-to-memory">
+<h3>STO - Store Accumulator to Memory<a class="headerlink" href="#sto-store-accumulator-to-memory" title="Permalink to this headline">¶</a></h3>
+<p>Store the value in the accumulator to the specified memory location</p>
+<p><strong>Function</strong></p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">STO</span> <span class="n">N</span>      <span class="p">(</span><span class="n">N</span><span class="p">)</span> <span class="o">&lt;-</span> <span class="n">A</span>
+<span class="n">STO</span> <span class="p">,</span><span class="n">D</span>     <span class="p">(</span><span class="n">PC</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">&lt;-</span> <span class="n">A</span>
+<span class="n">STO</span> <span class="o">/</span><span class="n">P</span>     <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">&lt;-</span> <span class="n">A</span>
+<span class="n">STO</span> <span class="o">/</span><span class="n">P</span><span class="o">+</span>    <span class="n">P</span> <span class="o">&lt;-</span> <span class="n">P</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">;</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">&lt;-</span> <span class="n">A</span>
+<span class="n">STO</span> <span class="o">/</span><span class="n">P</span><span class="o">-</span>    <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">&lt;-</span> <span class="n">A</span> <span class="p">;</span>  <span class="n">P</span> <span class="o">&lt;-</span> <span class="n">P</span> <span class="o">-</span> <span class="mi">1</span> <span class="p">;</span>
+<span class="n">STO</span> <span class="o">.</span><span class="n">W</span>     <span class="p">(</span><span class="n">W</span><span class="p">)</span> <span class="o">&lt;-</span> <span class="n">A</span>
+</pre></div>
+</div>
+<p><strong>Instruction Encoding</strong></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="5%" />
+<col width="1%" />
+<col width="1%" />
+<col width="3%" />
+<col width="23%" />
+<col width="1%" />
+<col width="22%" />
+<col width="14%" />
+<col width="30%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td colspan="5">Opcode Word</td>
+<td colspan="2" rowspan="3">Operand Word</td>
+<td rowspan="3">Function</td>
+<td rowspan="3">Cycle count</td>
+</tr>
+<tr class="row-even"><td rowspan="2">F</td>
+<td rowspan="2">I</td>
+<td colspan="3">N</td>
+</tr>
+<tr class="row-odd"><td>&#160;</td>
+<td>R</td>
+<td>P</td>
+</tr>
+<tr class="row-even"><td>0100</td>
+<td>0</td>
+<td colspan="3">11’b&lt;non-zero addr&gt;</td>
+<td colspan="2">none</td>
+<td>STO N</td>
+<td>TBC</td>
+</tr>
+<tr class="row-odd"><td>0100</td>
+<td>0</td>
+<td colspan="3">11’b000000000000</td>
+<td colspan="2">16`b&lt;data&gt;</td>
+<td>STO ,D</td>
+<td>TBC</td>
+</tr>
+<tr class="row-even"><td>0100</td>
+<td>1</td>
+<td>x</td>
+<td>x0</td>
+<td>8`b&lt;non-zero ptr&gt;</td>
+<td colspan="2">none</td>
+<td>STO /P</td>
+<td>TBC</td>
+</tr>
+<tr class="row-odd"><td>0100</td>
+<td>1</td>
+<td>x</td>
+<td>01</td>
+<td>8`b&lt;non-zero ptr&gt;</td>
+<td colspan="2">none</td>
+<td>STO /P+</td>
+<td>TBC</td>
+</tr>
+<tr class="row-even"><td>0100</td>
+<td>1</td>
+<td>x</td>
+<td>11</td>
+<td>8`b&lt;non-zero ptr&gt;</td>
+<td colspan="2">none</td>
+<td>STO /P-</td>
+<td>TBC</td>
+</tr>
+<tr class="row-odd"><td>0100</td>
+<td>1</td>
+<td>x</td>
+<td>xx</td>
+<td>8`b00000000</td>
+<td>x</td>
+<td>15`b&lt;addr&gt;</td>
+<td>STO .W</td>
+<td>TBC</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Condition Register</strong></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>F</td>
+<td>M</td>
+<td>C</td>
+<td>S</td>
+<td>V</td>
+<td>Z</td>
+<td>I</td>
+</tr>
+<tr class="row-even"><td>–</td>
+<td>–</td>
+<td>–</td>
+<td><ul class="first last simple">
+<li></li>
+</ul>
+</td>
+<td>0</td>
+<td><ul class="first last simple">
+<li></li>
+</ul>
+</td>
+<td>–</td>
+</tr>
+</tbody>
+</table>
+<ul class="simple">
+<li>Z is set if the accumulator value is all-zeroes, otherwise cleared</li>
+<li>S is set if the MSB of the accumulator is a ‘1’, otherwise cleared</li>
+<li>V is always cleared</li>
+</ul>
+</div>
+<span class="target" id="module-F100_Opcodes.OpcodeF10"></span><div class="section" id="sub-subtract-with-carry">
+<h3>SUB - Subtract (With Carry)<a class="headerlink" href="#sub-subtract-with-carry" title="Permalink to this headline">¶</a></h3>
+<p>Perform either a single or multi length substraction of the accumulator from the value of
+a provided operand depending on the state of the multi-length flag ‘M’ in the condition
+register.</p>
+<p><strong>Function</strong></p>
+<p>When M is clear, perform a simple subtraction</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">SUB</span> <span class="n">N</span>      <span class="n">A</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">N</span><span class="p">)</span> <span class="o">-</span> <span class="n">A</span>
+<span class="n">SUB</span> <span class="p">,</span><span class="n">D</span>     <span class="n">A</span> <span class="o">&lt;-</span> <span class="n">D</span> <span class="o">-</span> <span class="n">A</span>
+<span class="n">SUB</span> <span class="o">/</span><span class="n">P</span>     <span class="n">A</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">-</span> <span class="n">A</span>
+<span class="n">SUB</span> <span class="o">/</span><span class="n">P</span><span class="o">+</span>    <span class="n">P</span> <span class="o">&lt;-</span> <span class="n">P</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">;</span> <span class="n">A</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">-</span> <span class="n">A</span>
+<span class="n">SUB</span> <span class="o">/</span><span class="n">P</span><span class="o">-</span>    <span class="n">A</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">-</span> <span class="n">A</span> <span class="p">;</span> <span class="n">P</span> <span class="o">&lt;-</span> <span class="n">P</span> <span class="o">-</span> <span class="mi">1</span>
+<span class="n">SUB</span> <span class="o">.</span><span class="n">W</span>     <span class="n">A</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">W</span><span class="p">)</span> <span class="o">-</span> <span class="n">A</span>
+</pre></div>
+</div>
+<p>When M is set, include the carry from a previous operation in the subtraction</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">SUB</span> <span class="n">N</span>      <span class="n">A</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">N</span><span class="p">)</span> <span class="o">-</span> <span class="n">A</span> <span class="o">+</span> <span class="n">C</span> <span class="o">-</span> <span class="mi">1</span>
+<span class="n">SUB</span> <span class="p">,</span><span class="n">D</span>     <span class="n">A</span> <span class="o">&lt;-</span> <span class="n">D</span> <span class="o">-</span> <span class="n">A</span> <span class="o">+</span> <span class="n">C</span> <span class="o">-</span> <span class="mi">1</span>
+<span class="n">SUB</span> <span class="o">/</span><span class="n">P</span>     <span class="n">A</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">-</span> <span class="n">A</span> <span class="o">+</span> <span class="n">C</span> <span class="o">-</span> <span class="mi">1</span>
+<span class="n">SUB</span> <span class="o">/</span><span class="n">P</span><span class="o">+</span>    <span class="n">P</span> <span class="o">&lt;-</span> <span class="n">P</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">;</span> <span class="n">A</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">-</span> <span class="n">A</span> <span class="o">+</span> <span class="n">C</span> <span class="o">-</span> <span class="mi">1</span>
+<span class="n">SUB</span> <span class="o">/</span><span class="n">P</span><span class="o">-</span>    <span class="n">A</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">-</span> <span class="n">A</span> <span class="o">+</span> <span class="n">C</span> <span class="o">-</span> <span class="mi">1</span> <span class="p">;</span> <span class="n">P</span> <span class="o">&lt;-</span> <span class="n">P</span> <span class="o">-</span> <span class="mi">1</span>
+<span class="n">SUB</span> <span class="o">.</span><span class="n">W</span>     <span class="n">A</span> <span class="o">&lt;-</span> <span class="p">(</span><span class="n">W</span><span class="p">)</span> <span class="o">-</span> <span class="n">A</span> <span class="o">+</span> <span class="n">C</span> <span class="o">-</span> <span class="mi">1</span>
+</pre></div>
+</div>
+<p><strong>Instruction Encoding</strong></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="5%" />
+<col width="1%" />
+<col width="1%" />
+<col width="3%" />
+<col width="23%" />
+<col width="1%" />
+<col width="22%" />
+<col width="14%" />
+<col width="30%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td colspan="5">Opcode Word</td>
+<td colspan="2" rowspan="3">Operand Word</td>
+<td rowspan="3">Function</td>
+<td rowspan="3">Cycle count</td>
+</tr>
+<tr class="row-even"><td rowspan="2">F</td>
+<td rowspan="2">I</td>
+<td colspan="3">N</td>
+</tr>
+<tr class="row-odd"><td>&#160;</td>
+<td>R</td>
+<td>P</td>
+</tr>
+<tr class="row-even"><td>1010</td>
+<td>0</td>
+<td colspan="3">11’b&lt;non-zero addr&gt;</td>
+<td colspan="2">none</td>
+<td>SUB N</td>
+<td>TBC</td>
+</tr>
+<tr class="row-odd"><td>1010</td>
+<td>0</td>
+<td colspan="3">11’b000000000000</td>
+<td colspan="2">16’b&lt;data&gt;</td>
+<td>SUB ,D</td>
+<td>TBC</td>
+</tr>
+<tr class="row-even"><td>1010</td>
+<td>1</td>
+<td>x</td>
+<td>x0</td>
+<td>8’b&lt;non-zero ptr&gt;</td>
+<td colspan="2">none</td>
+<td>SUB /P</td>
+<td>TBC</td>
+</tr>
+<tr class="row-odd"><td>1010</td>
+<td>1</td>
+<td>x</td>
+<td>01</td>
+<td>8’b&lt;non-zero ptr&gt;</td>
+<td colspan="2">none</td>
+<td>SUB /P+</td>
+<td>TBC</td>
+</tr>
+<tr class="row-even"><td>1010</td>
+<td>1</td>
+<td>x</td>
+<td>11</td>
+<td>8’b&lt;non-zero ptr&gt;</td>
+<td colspan="2">none</td>
+<td>SUB /P-</td>
+<td>TBC</td>
+</tr>
+<tr class="row-odd"><td>1010</td>
+<td>1</td>
+<td>x</td>
+<td>xx</td>
+<td>8’b00000000</td>
+<td>x</td>
+<td>15’b&lt;addr&gt;</td>
+<td>SUB .W</td>
+<td>TBC</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Condition Register</strong></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+<col width="14%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>F</td>
+<td>M</td>
+<td>C</td>
+<td>S</td>
+<td>V</td>
+<td>Z</td>
+<td>I</td>
+</tr>
+<tr class="row-even"><td>–</td>
+<td>–</td>
+<td><ul class="first last simple">
+<li></li>
+</ul>
+</td>
+<td><ul class="first last simple">
+<li></li>
+</ul>
+</td>
+<td><ul class="first last simple">
+<li></li>
+</ul>
+</td>
+<td><ul class="first last simple">
+<li></li>
+</ul>
+</td>
+<td>–</td>
+</tr>
+</tbody>
+</table>
+<ul class="simple">
+<li>C is cleared if the operation results in a borrow (carry), otherwise set</li>
+<li>Z is set if the result is all-zeroes, otherwise cleared</li>
+<li>S is set if the MSB of the result is a ‘1’, otherwise cleared</li>
+<li>V is set if the subtraction of two numbers of different sign results in
+a number with the same sign as the subtrahend, otherwise cleared</li>
+</ul>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">The F100-L Instruction Set</a><ul>
+<li><a class="reference internal" href="#instruction-encoding">Instruction Encoding</a></li>
+<li><a class="reference internal" href="#instruction-timings">Instruction Timings</a></li>
+<li><a class="reference internal" href="#abbreviations">Abbreviations</a></li>
+<li><a class="reference internal" href="#instruction-set-summary">Instruction Set Summary</a></li>
+<li><a class="reference internal" href="#instruction-definitions">Instruction Definitions</a><ul>
+<li><a class="reference internal" href="#add-add-with-carry">ADD - Add (With Carry)</a></li>
+<li><a class="reference internal" href="#ads-add-with-carry-store-to-memory">ADS - Add (With Carry), Store to Memory</a></li>
+<li><a class="reference internal" href="#and-logical-and">AND - Logical AND</a></li>
+<li><a class="reference internal" href="#cal-call-subroutine">CAL - Call Subroutine</a></li>
+<li><a class="reference internal" href="#clr-set-bit-manipulation">CLR, SET - Bit manipulation</a></li>
+<li><a class="reference internal" href="#cmp-compare">CMP - Compare</a></li>
+<li><a class="reference internal" href="#halt-stop-processor-execution">HALT - Stop Processor Execution</a></li>
+<li><a class="reference internal" href="#icz-increment-and-jump-if-non-zero">ICZ - Increment and Jump if Non-Zero</a></li>
+<li><a class="reference internal" href="#jbc-jbs-jcs-jsc-conditional-jump">JBC, JBS, JCS, JSC - Conditional Jump</a></li>
+<li><a class="reference internal" href="#jmp-unconditional-jump">JMP - Unconditional Jump</a></li>
+<li><a class="reference internal" href="#lda-load-accumulator-from-memory">LDA - Load Accumulator from Memory</a></li>
+<li><a class="reference internal" href="#neq-logical-xor">NEQ - Logical XOR</a></li>
+<li><a class="reference internal" href="#rtn-rtc-return-from-subroutine">RTN, RTC - Return from Subroutine</a></li>
+<li><a class="reference internal" href="#sbs-subtract-with-carry-store-to-memory">SBS - Subtract (With Carry), Store to Memory</a></li>
+<li><a class="reference internal" href="#sjm-switch-jump">SJM - Switch Jump</a></li>
+<li><a class="reference internal" href="#sla-sle-sll-sra-sre-srl-shift-and-rotation">SLA,SLE,SLL,SRA,SRE,SRL - Shift and Rotation</a><ul>
+<li><a class="reference internal" href="#single-length-shifts">Single Length Shifts</a></li>
+<li><a class="reference internal" href="#single-length-rotations">Single Length Rotations</a></li>
+<li><a class="reference internal" href="#double-length-shifts">Double Length Shifts</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sto-store-accumulator-to-memory">STO - Store Accumulator to Memory</a></li>
+<li><a class="reference internal" href="#sub-subtract-with-carry">SUB - Subtract (With Carry)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="F100Arch.html" title="previous chapter">F100-L Microprocessor Architecture</a></li>
+      <li>Next: <a href="F100Asm.html" title="next chapter">The F100-L Assembler</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/doc/F100InstrSet.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Revaldinho.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      
+      |
+      <a href="../_sources/doc/F100InstrSet.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
